@@ -20,10 +20,24 @@ use KaririCode\Cli\ValueObject\GeneratorContext;
  *   - final readonly class (immutable by construction)
  *   - Constructor-promoted typed properties
  *   - #[Validate] and #[Sanitize] attributes inferred from field names
- *   - #[MapInput] for zero-configuration Console V4.1 binding
- *   - PHPDoc type annotations
+ *   - #[MapInput] for Console's InputMapper binding
  *   - Spec V4.3.3 documentation elements (§17)
  *
+ * The rules are named, not implemented: kariricode/validator and
+ * kariricode/sanitizer provide them.
+ *
+ * ARFA 1.3: P1 (the output depends only on the GeneratorContext).
+ * Spec V4.3.3: stateless generator, final class.
+ *
+ * Preconditions: the fields come from FieldInferenceEngine (ADR-002).
+ * Thread-safety: stateless; safe to share between fibers.
+ * Side effects: none; FileWriter writes the returned files (ADR-005).
+ *
+ * Example:
+ *   $files = (new DpoGenerator())->generate($context);
+ *
+ * References: ADR-002, ADR-012.
+ * @see https://www.php.net/manual/en/language.oop5.decon.php#language.oop5.decon.constructor.promotion
  */
 final class DpoGenerator implements Generator
 {
@@ -36,6 +50,7 @@ final class DpoGenerator implements Generator
 
     // ── Generator contract ───────────────────────────────────────────────
 
+    #[\Override]
     public function generate(GeneratorContext $context): array
     {
         $content = $this->renderDpo($context);
@@ -121,6 +136,7 @@ final class DpoGenerator implements Generator
         return implode("\n", array_map(fn($u) => "use {$u};", $uses));
     }
 
+    /** @param list<FieldDescriptor> $fields */
     private function buildProperties(array $fields): string
     {
         if ($fields === []) {
@@ -180,6 +196,7 @@ final class DpoGenerator implements Generator
         if (is_array($default)) {
             return '[]';
         }
-        return (string) $default;
+
+        return is_scalar($default) ? (string) $default : 'null';
     }
 }

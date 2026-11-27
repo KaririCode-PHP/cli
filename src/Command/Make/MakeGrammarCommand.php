@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KaririCode\Cli\Command\Make;
 
+use KaririCode\Cli\Application\InputValue;
 use KaririCode\Cli\Application\ScaffoldRunner;
 use KaririCode\Cli\Enum\GeneratorTarget;
 use KaririCode\Cli\Generator\GeneratorRegistry;
@@ -13,6 +14,7 @@ use KaririCode\Console\Contract\Command;
 use KaririCode\Console\Contract\Input;
 use KaririCode\Console\Contract\InputDefinition;
 use KaririCode\Console\Contract\Output;
+use KaririCode\Console\Enum\ExitCode;
 use KaririCode\Console\ValueObject\ArgumentDescriptor;
 use KaririCode\Console\ValueObject\OptionDescriptor;
 use KaririCode\Contract\Exception\ExceptionInterface;
@@ -38,10 +40,19 @@ use KaririCode\Contract\Exception\ExceptionInterface;
 #[AsCommand(name: 'make:grammar', description: 'Scaffold a Parser Grammar extension')]
 final class MakeGrammarCommand implements Command
 {
+    public string $name {
+        get => 'make:grammar';
+    }
+
+    public string $description {
+        get => 'Scaffold a Parser Grammar extension';
+    }
+
     public function __construct(
         private readonly GeneratorRegistry $registry,
     ) {}
 
+    #[\Override]
     public function configure(InputDefinition $definition): void
     {
         $definition->addArgument(new ArgumentDescriptor(
@@ -80,25 +91,26 @@ final class MakeGrammarCommand implements Command
         ));
     }
 
-    public function execute(Input $input, Output $output): int
+    #[\Override]
+    public function execute(Input $input, Output $output): ExitCode
     {
         try {
             $context = new GeneratorContext(
-                className: ScaffoldRunner::className((string) $input->getArgument('name'), 'Grammar'),
-                namespace: (string) ($input->getOption('namespace') ?? 'App\\Parser\\Grammar'),
+                className: ScaffoldRunner::className(InputValue::argument($input, 'name'), 'Grammar'),
+                namespace: InputValue::text($input, 'namespace', 'App\\Parser\\Grammar'),
                 target: GeneratorTarget::Grammar,
-                outputPath: ScaffoldRunner::outputPath((string) ($input->getOption('path') ?? 'src/Parser/Grammar')),
-                dryRun: (bool) $input->getOption('dry-run'),
-                force: (bool) $input->getOption('force'),
+                outputPath: ScaffoldRunner::outputPath(InputValue::text($input, 'path', 'src/Parser/Grammar')),
+                dryRun: InputValue::flag($input, 'dry-run'),
+                force: InputValue::flag($input, 'force'),
             );
 
             (new ScaffoldRunner($this->registry))->run($context, $output);
         } catch (ExceptionInterface $e) {
             $output->writeln("<error>✗ {$e->getMessage()}</error>");
 
-            return 1;
+            return ExitCode::Failure;
         }
 
-        return 0;
+        return ExitCode::Success;
     }
 }

@@ -9,16 +9,25 @@ use KaririCode\Cli\ValueObject\GeneratedFile;
 use KaririCode\Cli\ValueObject\GeneratorContext;
 
 /**
- * Generates a KaririCode\Parser Grammar extension class.
+ * Generates a grammar for kariricode/parser.
  *
- * A Grammar defines a DSL rule set that integrates into the Parser V4.0
- * GrammarRegistry. The scaffold provides the three mandatory hook points:
- *   - rules(): registers TokenKind extensions and parse rules
- *   - keywords(): additional reserved words for the lexer
- *   - operators(): custom operator tokens with precedence
+ * The generated class implements KaririCode\Parser\Contract\Grammar as
+ * kariricode/parser 4.1 declares it: id(), the key GrammarRegistry stores
+ * it under, and phpVersionRange(). The id is the class name without the
+ * "Grammar" suffix, in kebab case (BladeGrammar → "blade").
  *
- * Generated class targets KaririCode\Parser\Contract\Grammar.
+ * ARFA 1.3: P1 (the output depends only on the GeneratorContext).
+ * Spec V4.3.3: stateless generator, final class.
  *
+ * Preconditions: the context passed GeneratorContext validation.
+ * Thread-safety: stateless; safe to share between fibers.
+ * Side effects: none; FileWriter writes the returned files (ADR-005).
+ *
+ * Example:
+ *   $files = (new GrammarGenerator())->generate($context);
+ *
+ * References: ADR-011 (kariricode/parser stays optional), ADR-012.
+ * @see https://en.wikipedia.org/wiki/Formal_grammar
  */
 final class GrammarGenerator implements Generator
 {
@@ -26,10 +35,12 @@ final class GrammarGenerator implements Generator
         get => 'Grammar';
     }
 
+    #[\Override]
     public function generate(GeneratorContext $context): array
     {
         $namespace = $context->namespace;
         $class     = $context->className;
+        $id        = self::grammarId($class);
 
         $content = <<<PHP
         <?php
@@ -39,17 +50,16 @@ final class GrammarGenerator implements Generator
         namespace {$namespace};
 
         use KaririCode\\Parser\\Contract\\Grammar;
-        use KaririCode\\Parser\\Registry\\GrammarRegistry;
 
         /**
-         * Custom grammar extension for the KaririCode\\Parser.
+         * Grammar: {$class}.
          *
-         * Register this grammar in the GrammarRegistry at bootstrap:
+         * Identifies a language or dialect to kariricode/parser.
+         * GrammarRegistry stores grammars by id(), which must be unique among
+         * the registered grammars.
          *
-         *   \$registry = new GrammarRegistry();
-         *   \$registry->register(new {$class}());
-         *
-         * ARFA 1.3: P4. Spec V4.3.3: grammar extension for kariricode/parser.
+         * ARFA 1.3: P4. Spec V4.3.3: grammar for kariricode/parser, final and
+         * stateless.
          *
          * Preconditions: registered in a GrammarRegistry before parsing.
          * Thread-safety: stateless; safe to share.
@@ -63,45 +73,17 @@ final class GrammarGenerator implements Generator
          */
         final class {$class} implements Grammar
         {
-            public function name(): string
+            #[\Override]
+            public function id(): string
             {
-                return '{$class}';
+                return '{$id}';
             }
 
-            /**
-             * Registers parse rules into the grammar registry.
-             *
-             * Called once during parser bootstrap. Add token rules,
-             * precedence tables, and production rules here.
-             */
-            public function rules(GrammarRegistry \$registry): void
+            #[\Override]
+            public function phpVersionRange(): string
             {
-                // Example: \$registry->addRule('custom_stmt', fn(\$parser) => ...);
-            }
-
-            /**
-             * Additional keywords that the lexer must recognize.
-             *
-             * Return an array of lowercase keyword strings.
-             *
-             * @return list<string>
-             */
-            public function keywords(): array
-            {
-                return [];
-            }
-
-            /**
-             * Custom operator tokens with their precedence.
-             *
-             * Keys are token strings; values are integer precedence levels
-             * (higher = tighter binding, same scale as built-in operators).
-             *
-             * @return array<string, int>
-             */
-            public function operators(): array
-            {
-                return [];
+                // TODO: the PHP versions this grammar accepts, as "min-max"
+                return '8.4-8.4';
             }
         }
         PHP;
@@ -113,5 +95,14 @@ final class GrammarGenerator implements Generator
                 label: "Grammar: {$class}",
             ),
         ];
+    }
+
+    /** BladeGrammar → "blade", TwigTemplateGrammar → "twig-template". */
+    private static function grammarId(string $class): string
+    {
+        $base = preg_replace('/Grammar\z/', '', $class);
+        $base = $base === null || $base === '' ? $class : $base;
+
+        return strtolower((string) preg_replace('/(?<=[a-z0-9])[A-Z]/', '-$0', $base));
     }
 }

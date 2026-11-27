@@ -8,6 +8,7 @@ use KaririCode\Cli\Contract\Generator;
 use KaririCode\Cli\Enum\GeneratorTarget;
 use KaririCode\Cli\Exception\GeneratorNotFoundException;
 use KaririCode\Cli\Exception\ScaffoldFailureException;
+
 // Concrete generators resolved from same namespace — no explicit use needed
 
 /**
@@ -49,7 +50,7 @@ final class GeneratorRegistry
     /**
      * Registers a generator for a target.
      *
-     * Must be called before seal(). Calling after seal() throws ScaffoldFailureException 8642.
+     * Must be called before seal(). Calling after seal() throws ScaffoldFailureException 8942.
      */
     public function register(GeneratorTarget $target, Generator $generator): void
     {
@@ -84,13 +85,13 @@ final class GeneratorRegistry
 
     private function registerDefaults(): void
     {
-        $this->register(GeneratorTarget::Dpo,         new DpoGenerator());
-        $this->register(GeneratorTarget::Command,     new CommandGenerator());
+        $this->register(GeneratorTarget::Dpo, new DpoGenerator());
+        $this->register(GeneratorTarget::Command, new CommandGenerator());
         $this->register(GeneratorTarget::ValueObject, new ValueObjectGenerator());
-        $this->register(GeneratorTarget::Entity,      new EntityGenerator());
-        $this->register(GeneratorTarget::Service,     new ServiceGenerator());
-        $this->register(GeneratorTarget::Repository,  new RepositoryGenerator());
-        $this->register(GeneratorTarget::Grammar,     new GrammarGenerator());
-        $this->register(GeneratorTarget::Visitor,     new VisitorGenerator());
+        $this->register(GeneratorTarget::Entity, new EntityGenerator());
+        $this->register(GeneratorTarget::Service, new ServiceGenerator());
+        $this->register(GeneratorTarget::Repository, new RepositoryGenerator());
+        $this->register(GeneratorTarget::Grammar, new GrammarGenerator());
+        $this->register(GeneratorTarget::Visitor, new VisitorGenerator());
     }
 }

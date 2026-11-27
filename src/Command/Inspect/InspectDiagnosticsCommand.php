@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KaririCode\Cli\Command\Inspect;
 
+use KaririCode\Cli\Application\InputValue;
 use KaririCode\Cli\Contract\DiagnosticsSource;
 use KaririCode\Cli\Enum\OutputFormat;
 use KaririCode\Cli\Template\OutputRenderer;
@@ -12,6 +13,7 @@ use KaririCode\Console\Contract\Command;
 use KaririCode\Console\Contract\Input;
 use KaririCode\Console\Contract\InputDefinition;
 use KaririCode\Console\Contract\Output;
+use KaririCode\Console\Enum\ExitCode;
 use KaririCode\Console\ValueObject\ArgumentDescriptor;
 use KaririCode\Console\ValueObject\OptionDescriptor;
 use KaririCode\Contract\Exception\ExceptionInterface;
@@ -36,6 +38,14 @@ use KaririCode\Contract\Exception\ExceptionInterface;
 #[AsCommand(name: 'inspect:diagnostics', description: 'Run source diagnostics through a DiagnosticsSource adapter')]
 final class InspectDiagnosticsCommand implements Command
 {
+    public string $name {
+        get => 'inspect:diagnostics';
+    }
+
+    public string $description {
+        get => 'Run source diagnostics through a DiagnosticsSource adapter';
+    }
+
     /** @var list<string> */
     private const array SEVERITIES = ['error', 'warning', 'info', 'hint'];
 
@@ -44,6 +54,7 @@ final class InspectDiagnosticsCommand implements Command
         private readonly ?DiagnosticsSource $source = null,
     ) {}
 
+    #[\Override]
     public function configure(InputDefinition $definition): void
     {
         $definition->addArgument(new ArgumentDescriptor(
@@ -57,38 +68,44 @@ final class InspectDiagnosticsCommand implements Command
         $definition->addOption(new OptionDescriptor(name: 'max-files', description: 'Stop after N files (0 = no limit)', default: '0'));
     }
 
-    public function execute(Input $input, Output $output): int
+    #[\Override]
+    public function execute(Input $input, Output $output): ExitCode
     {
         if ($this->source === null) {
             $output->writeln('<error>✗ inspect:diagnostics needs a DiagnosticsSource adapter; none is registered (ADR-011).</error>');
 
-            return 1;
+            return ExitCode::Failure;
         }
 
-        $path     = (string) ($input->getArgument('path') ?? 'src');
-        $severity = strtolower((string) ($input->getOption('severity') ?? 'info'));
+        $path     = InputValue::argument($input, 'path', 'src');
+        $severity = strtolower(InputValue::text($input, 'severity', 'info'));
 
         if (!file_exists($path) || !in_array($severity, self::SEVERITIES, true)) {
             $output->writeln('<error>✗ The path does not exist or the severity is not error, warning, info or hint.</error>');
 
-            return 2;
+            return ExitCode::Invalid;
         }
 
         try {
             $result = $this->source->diagnose(
                 path: $path,
                 minimumSeverity: $severity,
-                maxFiles: max(0, (int) ($input->getOption('max-files') ?? 0)),
+                maxFiles: max(0, InputValue::integer($input, 'max-files', 0)),
             );
         } catch (ExceptionInterface $e) {
             $output->writeln("<error>✗ {$e->getMessage()}</error>");
 
-            return 1;
+            return ExitCode::Failure;
         }
 
-        $json = (string) ($input->getOption('format') ?? 'human') === 'json';
+        $json = InputValue::text($input, 'format', 'human') === 'json';
         $this->renderer->render($result, $output, $json ? OutputFormat::Json : OutputFormat::Table);
 
-        return (int) ($result->summary['errors'] ?? 0) > 0 ? 1 : 0;
+        return self::hasErrors($result->summary['errors'] ?? null) ? ExitCode::Failure : ExitCode::Success;
+    }
+
+    private static function hasErrors(bool|float|int|string|null $count): bool
+    {
+        return is_int($count) && $count > 0;
     }
 }

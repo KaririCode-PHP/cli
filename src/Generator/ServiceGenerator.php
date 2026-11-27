@@ -9,8 +9,20 @@ use KaririCode\Cli\ValueObject\GeneratedFile;
 use KaririCode\Cli\ValueObject\GeneratorContext;
 
 /**
- * Generates a domain Service class with DI constructor injection.
+ * Generates an application service class with constructor injection.
  *
+ * ARFA 1.3: P1 (the output depends only on the GeneratorContext).
+ * Spec V4.3.3: stateless generator, final class.
+ *
+ * Preconditions: the context passed GeneratorContext validation.
+ * Thread-safety: stateless; safe to share between fibers.
+ * Side effects: none; FileWriter writes the returned files (ADR-005).
+ *
+ * Example:
+ *   $files = (new ServiceGenerator())->generate($context);
+ *
+ * References: ADR-012.
+ * @see https://martinfowler.com/eaaCatalog/serviceLayer.html
  */
 final class ServiceGenerator implements Generator
 {
@@ -18,6 +30,7 @@ final class ServiceGenerator implements Generator
         get => 'Service';
     }
 
+    #[\Override]
     public function generate(GeneratorContext $context): array
     {
         return [
@@ -31,8 +44,8 @@ final class ServiceGenerator implements Generator
 
     private function render(GeneratorContext $context): string
     {
-        $ns     = $context->namespace;
-        $class  = $context->className;
+        $ns    = $context->namespace;
+        $class = $context->className;
 
         // Infer a repository hint from class name: UserService → UserRepository
         $domainName = preg_replace('/Service\z/', '', $class) ?? $class;

@@ -10,8 +10,20 @@ use KaririCode\Cli\ValueObject\GeneratedFile;
 use KaririCode\Cli\ValueObject\GeneratorContext;
 
 /**
- * Generates a final readonly Value Object with self-validation factory.
+ * Generates a final readonly Value Object with a self-validating factory.
  *
+ * ARFA 1.3: P1 (the output depends only on the GeneratorContext).
+ * Spec V4.3.3: stateless generator, final class.
+ *
+ * Preconditions: the context passed GeneratorContext validation.
+ * Thread-safety: stateless; safe to share between fibers.
+ * Side effects: none; FileWriter writes the returned files (ADR-005).
+ *
+ * Example:
+ *   $files = (new ValueObjectGenerator())->generate($context);
+ *
+ * References: ADR-012.
+ * @see https://martinfowler.com/bliki/ValueObject.html
  */
 final class ValueObjectGenerator implements Generator
 {
@@ -19,12 +31,13 @@ final class ValueObjectGenerator implements Generator
     private const string PARAM_INDENT = '        ';
 
     /** Method-body statement indent (class 0 → method 4 → body 8). */
-    private const string BODY_INDENT  = '        ';
+    private const string BODY_INDENT = '        ';
 
     public string $type {
         get => 'ValueObject';
     }
 
+    #[\Override]
     public function generate(GeneratorContext $context): array
     {
         return [
@@ -94,6 +107,7 @@ final class ValueObjectGenerator implements Generator
         PHP;
     }
 
+    /** @param list<FieldDescriptor> $fields */
     private function buildProperties(array $fields): string
     {
         $indent = self::PARAM_INDENT;
@@ -108,6 +122,7 @@ final class ValueObjectGenerator implements Generator
         ));
     }
 
+    /** @param list<FieldDescriptor> $fields */
     private function buildFactoryArgs(array $fields): string
     {
         if ($fields === []) {
@@ -120,6 +135,7 @@ final class ValueObjectGenerator implements Generator
         ));
     }
 
+    /** @param list<FieldDescriptor> $fields */
     private function buildConstructorCall(array $fields): string
     {
         if ($fields === []) {
@@ -132,6 +148,7 @@ final class ValueObjectGenerator implements Generator
         ));
     }
 
+    /** @param list<FieldDescriptor> $fields */
     private function buildGuards(array $fields): string
     {
         $indent = self::BODY_INDENT;

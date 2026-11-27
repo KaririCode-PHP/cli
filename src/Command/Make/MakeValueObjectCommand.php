@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KaririCode\Cli\Command\Make;
 
+use KaririCode\Cli\Application\InputValue;
 use KaririCode\Cli\Application\ScaffoldRunner;
 use KaririCode\Cli\Enum\GeneratorTarget;
 use KaririCode\Cli\Generator\GeneratorRegistry;
@@ -14,6 +15,7 @@ use KaririCode\Console\Contract\Command;
 use KaririCode\Console\Contract\Input;
 use KaririCode\Console\Contract\InputDefinition;
 use KaririCode\Console\Contract\Output;
+use KaririCode\Console\Enum\ExitCode;
 use KaririCode\Console\ValueObject\ArgumentDescriptor;
 use KaririCode\Console\ValueObject\OptionDescriptor;
 use KaririCode\Contract\Exception\ExceptionInterface;
@@ -39,11 +41,20 @@ use KaririCode\Contract\Exception\ExceptionInterface;
 #[AsCommand(name: 'make:value-object', description: 'Generate a final readonly Value Object with self-validation factory')]
 final class MakeValueObjectCommand implements Command
 {
+    public string $name {
+        get => 'make:value-object';
+    }
+
+    public string $description {
+        get => 'Generate a final readonly Value Object with self-validation factory';
+    }
+
     public function __construct(
         private readonly GeneratorRegistry $generators,
         private readonly FieldInferenceEngine $inference,
     ) {}
 
+    #[\Override]
     public function configure(InputDefinition $definition): void
     {
         $definition->addArgument(new ArgumentDescriptor(
@@ -88,26 +99,27 @@ final class MakeValueObjectCommand implements Command
         ));
     }
 
-    public function execute(Input $input, Output $output): int
+    #[\Override]
+    public function execute(Input $input, Output $output): ExitCode
     {
         try {
             $context = new GeneratorContext(
-                className: ScaffoldRunner::className((string) $input->getArgument('name'), ''),
-                namespace: (string) ($input->getOption('namespace') ?? 'App\\ValueObject'),
+                className: ScaffoldRunner::className(InputValue::argument($input, 'name'), ''),
+                namespace: InputValue::text($input, 'namespace', 'App\\ValueObject'),
                 target: GeneratorTarget::ValueObject,
-                outputPath: ScaffoldRunner::outputPath((string) ($input->getOption('path') ?? 'src/ValueObject')),
-                fields: $this->inference->parseAll((string) ($input->getOption('fields') ?? '')),
-                dryRun: (bool) $input->getOption('dry-run'),
-                force: (bool) $input->getOption('force'),
+                outputPath: ScaffoldRunner::outputPath(InputValue::text($input, 'path', 'src/ValueObject')),
+                fields: $this->inference->parseAll(InputValue::text($input, 'fields', '')),
+                dryRun: InputValue::flag($input, 'dry-run'),
+                force: InputValue::flag($input, 'force'),
             );
 
             (new ScaffoldRunner($this->generators))->run($context, $output);
         } catch (ExceptionInterface $e) {
             $output->writeln("<error>✗ {$e->getMessage()}</error>");
 
-            return 1;
+            return ExitCode::Failure;
         }
 
-        return 0;
+        return ExitCode::Success;
     }
 }

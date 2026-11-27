@@ -63,7 +63,7 @@ final class OutputRenderer
         $output->writeln('  ' . str_repeat('─', self::RULE_WIDTH));
 
         foreach ($result->summary as $key => $value) {
-            $label = $this->pad(str_replace('_', ' ', ucfirst((string) $key)), 20);
+            $label = $this->pad(str_replace('_', ' ', ucfirst($key)), 20);
             $output->writeln("  <info>{$label}</info> {$this->stringify($value)}");
         }
 
@@ -88,7 +88,7 @@ final class OutputRenderer
 
         $header = '  ';
         foreach ($columns as $column) {
-            $header .= $this->pad(strtoupper((string) $column), $widths[$column] + 2);
+            $header .= $this->pad(strtoupper($column), $widths[$column] + 2);
         }
 
         $output->writeln("<info>{$header}</info>");
@@ -131,9 +131,9 @@ final class OutputRenderer
     private function renderJson(InspectionResult $result, Output $output): void
     {
         $payload = [
-            'component'   => $result->componentName,
-            'summary'     => $result->summary,
-            'rows'        => $result->rows
+            'component' => $result->componentName,
+            'summary'   => $result->summary,
+            'rows'      => $result->rows,
         ];
 
         $output->writeln(json_encode(
@@ -157,8 +157,8 @@ final class OutputRenderer
     // ── Helpers ──────────────────────────────────────────────────────────
 
     /**
-     * @param  list<array<string,mixed>> $rows
-     * @param  list<string>              $columns
+     * @param  list<array<string, scalar|null>> $rows
+     * @param  list<string>                     $columns
      * @return array<string,int>
      */
     private function columnWidths(array $rows, array $columns): array
@@ -166,7 +166,7 @@ final class OutputRenderer
         $widths = [];
 
         foreach ($columns as $column) {
-            $widths[$column] = mb_strwidth((string) $column);
+            $widths[$column] = mb_strwidth($column);
         }
 
         foreach ($rows as $row) {
@@ -184,14 +184,13 @@ final class OutputRenderer
         return $text . str_repeat(' ', max(0, $width - mb_strwidth($text)));
     }
 
-    /** Scalar-safe text for summary/cell values (arrays and bools included). */
-    private function stringify(mixed $value): string
+    /** Text for a summary or cell value: booleans read yes/no, null an em dash. */
+    private function stringify(bool|float|int|string|null $value): string
     {
         return match (true) {
-            is_bool($value)   => $value ? 'yes' : 'no',
-            $value === null   => '—',
-            is_scalar($value) => (string) $value,
-            default           => (string) json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            is_bool($value) => $value ? 'yes' : 'no',
+            $value === null => '—',
+            default         => (string) $value,
         };
     }
 }

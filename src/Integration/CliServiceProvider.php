@@ -57,6 +57,7 @@ use KaririCode\Contract\DI\ServiceProvider;
  */
 final class CliServiceProvider implements ServiceProvider
 {
+    #[\Override]
     public function register(BindableContainer $container): void
     {
         $container->bind(GeneratorRegistry::class, static fn(): GeneratorRegistry => new GeneratorRegistry(), singleton: true);
@@ -72,9 +73,8 @@ final class CliServiceProvider implements ServiceProvider
         }
     }
 
-    public function boot(): void
-    {
-    }
+    #[\Override]
+    public function boot(): void {}
 
     /** Standalone application for bin/kcli; adapters come from $container when given. */
     public static function buildApplication(?BindableContainer $container = null): Application
@@ -133,8 +133,16 @@ final class CliServiceProvider implements ServiceProvider
             return null;
         }
 
-        $service = $container->get($id);
+        return self::ofClass($container->get($id), $id);
+    }
 
+    /**
+     * @template T of object
+     * @param  class-string<T> $id
+     * @return T|null
+     */
+    private static function ofClass(mixed $service, string $id): ?object
+    {
         return $service instanceof $id ? $service : null;
     }
 }

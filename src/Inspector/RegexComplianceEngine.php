@@ -32,12 +32,12 @@ final class RegexComplianceEngine implements ComplianceEngine
 
     /** @var array<string, array{pattern: string, severity: string, message: string}> */
     private const array PATTERN_RULES = [
-        'V01'  => [
+        'V01' => [
             'pattern'  => '/\A(?:#![^\n]*\n)?<\?php(?:\s++|\/\*.*?\*\/|\/\/[^\n]*+|#(?!\[)[^\n]*+)*+(?!declare\s*\(\s*strict_types\s*=\s*1\s*\))/si',
             'severity' => 'P0',
             'message'  => 'Missing declare(strict_types=1) as the first statement',
         ],
-        'V03'  => [
+        'V03' => [
             'pattern'  => '/^\s*enum\s+\w+\s*:\s*(?:string|int)\b/m',
             'severity' => 'P1',
             'message'  => 'Backed enum: document the external contract that needs the backing (E-003)',
@@ -52,37 +52,37 @@ final class RegexComplianceEngine implements ComplianceEngine
             'severity' => 'P0',
             'message'  => 'fromArray() on a domain type (E-001)',
         ],
-        'V07'  => [
+        'V07' => [
             'pattern'  => '/public\s+function\s+jsonSerialize\s*\(/',
             'severity' => 'P1',
             'message'  => 'jsonSerialize() on a domain type; implement SerializableData instead (E-001)',
         ],
-        'V10'  => [
+        'V10' => [
             'pattern'  => '/^\s*\*\s*@(?:package|author|license|since|copyright|category|version)\b/m',
             'severity' => 'P1',
             'message'  => 'Boilerplate docblock tag (Spec V4.3.3 §17)',
         ],
-        'V11'  => [
+        'V11' => [
             'pattern'  => '/^\s*(?:(?:final|public|protected|private)\s+)*const\s+[A-Z][A-Z0-9_]*\s*=/m',
             'severity' => 'P1',
             'message'  => 'Untyped class constant',
         ],
-        'V12'  => [
+        'V12' => [
             'pattern'  => '/preg_[a-z_]+\(\s*\x27[^\x27]*\$\/(?![a-zA-Z]*m)[a-zA-Z]*\x27/',
             'severity' => 'P1',
             'message'  => 'Regex anchored with $ instead of \z',
         ],
-        'V13'  => [
+        'V13' => [
             'pattern'  => '/public\s+function\s+get[A-Z]\w*\s*\(\s*\)/',
             'severity' => 'P1',
             'message'  => 'Getter method; expose a property instead',
         ],
-        'V16'  => [
+        'V16' => [
             'pattern'  => '/throw\s+new\s+\\\\?(?:Exception|ErrorException|RuntimeException|LogicException|InvalidArgumentException|DomainException|UnexpectedValueException)\s*\(/',
             'severity' => 'P1',
             'message'  => 'Generic exception; throw one that implements a kariricode/contract family',
         ],
-        'V18'  => [
+        'V18' => [
             'pattern'  => '/function\s+\w+\s*\([^)]*\??\bobject\s+\$/',
             'severity' => 'P1',
             'message'  => 'object-typed parameter; couple through kariricode/contract or a PSR (Spec V4.3.3 §31)',
@@ -106,6 +106,7 @@ final class RegexComplianceEngine implements ComplianceEngine
         get => 'regex';
     }
 
+    #[\Override]
     public function scan(string $directory): InspectionResult
     {
         if (!is_dir($directory)) {
@@ -120,7 +121,9 @@ final class RegexComplianceEngine implements ComplianceEngine
         $rows  = [];
 
         foreach ($files as $file) {
-            $relative = substr($file, strlen(rtrim($directory, '/')) + 1);
+            // Forward slashes on every platform: on Windows the iterator joins
+            // with a backslash, and reports would differ between machines.
+            $relative = str_replace('\\', '/', substr($file, strlen(rtrim($directory, '/\\')) + 1));
             array_push($rows, ...$this->scanFile($relative, (string) file_get_contents($file)));
         }
 
@@ -148,8 +151,9 @@ final class RegexComplianceEngine implements ComplianceEngine
             new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
         );
 
+        /** @var \SplFileInfo $entry RecursiveDirectoryIterator yields SplFileInfo by default */
         foreach ($iterator as $entry) {
-            if ($entry instanceof \SplFileInfo && $entry->isFile() && $entry->getExtension() === 'php') {
+            if ($entry->isFile() && $entry->getExtension() === 'php') {
                 $files[] = $entry->getPathname();
             }
         }
@@ -218,7 +222,10 @@ final class RegexComplianceEngine implements ComplianceEngine
         return $rows;
     }
 
-    /** @return list<int> */
+    /**
+     * @param  non-empty-string $pattern
+     * @return list<int>
+     */
     private function matchLines(string $pattern, string $source): array
     {
         if ((int) preg_match_all($pattern, $source, $matches, PREG_OFFSET_CAPTURE) === 0) {
@@ -232,7 +239,7 @@ final class RegexComplianceEngine implements ComplianceEngine
     }
 
     /**
-     * @param  array{severity: string, message: string} $rule
+     * @param  array{pattern?: string, severity: string, message: string} $rule
      * @return array{code: string, severity: string, file: string, line: string, message: string}
      */
     private function row(string $code, array $rule, string $file, int $line): array

@@ -29,11 +29,11 @@ enum OutputFormat
     public static function fromString(string $format): self
     {
         return match (strtolower($format)) {
-            'table'       => self::Table,
-            'tree'        => self::Tree,
-            'json'        => self::Json,
+            'table'         => self::Table,
+            'tree'          => self::Tree,
+            'json'          => self::Json,
             'plain', 'text' => self::Plain,
-            default       => self::Table,
+            default         => self::Table,
         };
     }
 }

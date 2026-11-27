@@ -10,7 +10,7 @@ use KaririCode\Contract\Exception\Validation;
  * Rejected scaffolding input: class name, namespace or a --fields entry.
  *
  * ARFA 1.3: P1 (raised before any state exists). Spec V4.3.3: exception
- * of the Validation family, codes 8600–8619 of the CLI block.
+ * of the Validation family, codes 8900–8919 of the CLI block.
  *
  * Preconditions: none.
  * Thread-safety: immutable after construction.
@@ -31,16 +31,16 @@ final class InvalidScaffoldRequestException extends \InvalidArgumentException im
 
     public static function invalidClassName(): self
     {
-        return new self('[CLI_8600] Invalid class name: use PascalCase letters and digits and avoid PHP reserved words.', 8600);
+        return new self('[CLI_8900] Invalid class name: use PascalCase letters and digits and avoid PHP reserved words.', 8900);
     }
 
     public static function invalidNamespace(): self
     {
-        return new self('[CLI_8601] Invalid namespace: use backslash-separated PHP identifiers, such as App\\Domain\\User.', 8601);
+        return new self('[CLI_8901] Invalid namespace: use backslash-separated PHP identifiers, such as App\\Domain\\User.', 8901);
     }
 
     public static function invalidFieldDefinition(): self
     {
-        return new self('[CLI_8602] Invalid --fields entry: expected name or name:type, such as email:string.', 8602);
+        return new self('[CLI_8902] Invalid --fields entry: expected name or name:type, such as email:string.', 8902);
     }
 }

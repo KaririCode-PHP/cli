@@ -9,11 +9,25 @@ use KaririCode\Cli\ValueObject\GeneratedFile;
 use KaririCode\Cli\ValueObject\GeneratorContext;
 
 /**
- * Generates a Repository interface + skeleton implementation.
+ * Generates a Repository interface and a skeleton implementation.
  *
- * Two files per invocation: the domain contract (interface) lives in the
- * same directory; the implementation skeleton belongs in Infrastructure.
+ * Two files per invocation, in the target directory: the domain contract
+ * (interface) and Db<Name>, the implementation skeleton, which usually
+ * moves to Infrastructure. ScaffoldRunner checks both targets before
+ * writing either (ADR-008).
  *
+ * ARFA 1.3: P1 (the output depends only on the GeneratorContext).
+ * Spec V4.3.3: stateless generator, final class.
+ *
+ * Preconditions: the context passed GeneratorContext validation.
+ * Thread-safety: stateless; safe to share between fibers.
+ * Side effects: none; FileWriter writes the returned files (ADR-005).
+ *
+ * Example:
+ *   [$interface, $implementation] = (new RepositoryGenerator())->generate($context);
+ *
+ * References: ADR-005, ADR-008, ADR-012.
+ * @see https://martinfowler.com/eaaCatalog/repository.html
  */
 final class RepositoryGenerator implements Generator
 {
@@ -21,6 +35,7 @@ final class RepositoryGenerator implements Generator
         get => 'Repository';
     }
 
+    #[\Override]
     public function generate(GeneratorContext $context): array
     {
         $domainName = preg_replace('/Repository\z/', '', $context->className) ?? $context->className;
@@ -41,8 +56,8 @@ final class RepositoryGenerator implements Generator
 
     private function renderInterface(GeneratorContext $context, string $domainName): string
     {
-        $ns     = $context->namespace;
-        $class  = $context->className;
+        $ns    = $context->namespace;
+        $class = $context->className;
 
         return <<<PHP
         <?php
@@ -83,9 +98,9 @@ final class RepositoryGenerator implements Generator
 
     private function renderImplementation(GeneratorContext $context, string $domainName): string
     {
-        $ns     = $context->namespace;
-        $class  = $context->className;
-        $impl   = 'Db' . $class; // interpolated: keeps check:arfa V09 (regex) from counting the template
+        $ns    = $context->namespace;
+        $class = $context->className;
+        $impl  = 'Db' . $class; // interpolated: keeps check:arfa V09 (regex) from counting the template
 
         return <<<PHP
         <?php

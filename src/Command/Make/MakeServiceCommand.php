@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KaririCode\Cli\Command\Make;
 
+use KaririCode\Cli\Application\InputValue;
 use KaririCode\Cli\Application\ScaffoldRunner;
 use KaririCode\Cli\Enum\GeneratorTarget;
 use KaririCode\Cli\Generator\GeneratorRegistry;
@@ -13,6 +14,7 @@ use KaririCode\Console\Contract\Command;
 use KaririCode\Console\Contract\Input;
 use KaririCode\Console\Contract\InputDefinition;
 use KaririCode\Console\Contract\Output;
+use KaririCode\Console\Enum\ExitCode;
 use KaririCode\Console\ValueObject\ArgumentDescriptor;
 use KaririCode\Console\ValueObject\OptionDescriptor;
 use KaririCode\Contract\Exception\ExceptionInterface;
@@ -41,10 +43,19 @@ use KaririCode\Contract\Exception\ExceptionInterface;
 #[AsCommand(name: 'make:service', description: 'Generate an application service class')]
 final class MakeServiceCommand implements Command
 {
+    public string $name {
+        get => 'make:service';
+    }
+
+    public string $description {
+        get => 'Generate an application service class';
+    }
+
     public function __construct(
         private readonly GeneratorRegistry $generators,
     ) {}
 
+    #[\Override]
     public function configure(InputDefinition $definition): void
     {
         $definition->addArgument(new ArgumentDescriptor(
@@ -83,25 +94,26 @@ final class MakeServiceCommand implements Command
         ));
     }
 
-    public function execute(Input $input, Output $output): int
+    #[\Override]
+    public function execute(Input $input, Output $output): ExitCode
     {
         try {
             $context = new GeneratorContext(
-                className: ScaffoldRunner::className((string) $input->getArgument('name'), 'Service'),
-                namespace: (string) ($input->getOption('namespace') ?? 'App\\Service'),
+                className: ScaffoldRunner::className(InputValue::argument($input, 'name'), 'Service'),
+                namespace: InputValue::text($input, 'namespace', 'App\\Service'),
                 target: GeneratorTarget::Service,
-                outputPath: ScaffoldRunner::outputPath((string) ($input->getOption('path') ?? 'src/Service')),
-                dryRun: (bool) $input->getOption('dry-run'),
-                force: (bool) $input->getOption('force'),
+                outputPath: ScaffoldRunner::outputPath(InputValue::text($input, 'path', 'src/Service')),
+                dryRun: InputValue::flag($input, 'dry-run'),
+                force: InputValue::flag($input, 'force'),
             );
 
             (new ScaffoldRunner($this->generators))->run($context, $output);
         } catch (ExceptionInterface $e) {
             $output->writeln("<error>✗ {$e->getMessage()}</error>");
 
-            return 1;
+            return ExitCode::Failure;
         }
 
-        return 0;
+        return ExitCode::Success;
     }
 }

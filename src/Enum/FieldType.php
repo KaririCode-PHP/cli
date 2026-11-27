@@ -44,12 +44,12 @@ enum FieldType
         return match ($this) {
             self::String, self::Email, self::Url,
             self::Phone, self::Cpf, self::Cnpj => 'string',
-            self::Int                           => 'int',
-            self::Float, self::Money            => 'float',
-            self::Bool                          => 'bool',
-            self::Array                         => 'array',
-            self::DateTimeImmutable             => '\DateTimeImmutable',
-            self::Uuid                          => 'string',
+            self::Int                          => 'int',
+            self::Float, self::Money           => 'float',
+            self::Bool                         => 'bool',
+            self::Array                        => 'array',
+            self::DateTimeImmutable            => '\DateTimeImmutable',
+            self::Uuid                         => 'string',
         };
     }
 

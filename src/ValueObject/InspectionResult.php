@@ -22,8 +22,8 @@ namespace KaririCode\Cli\ValueObject;
 final readonly class InspectionResult
 {
     /**
-     * @param list<array<string,mixed>> $rows    Tabular data for table/tree rendering.
-     * @param array<string,mixed>       $summary Key metrics shown in the header.
+     * @param list<array<string, scalar|null>> $rows    Tabular data for table/tree rendering.
+     * @param array<string, scalar|null>       $summary Key metrics shown in the header.
      */
     public function __construct(
         public string $componentName,

@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace KaririCode\Cli\Command\Check;
 
+use KaririCode\Cli\Application\InputValue;
 use KaririCode\Console\Attribute\AsCommand;
 use KaririCode\Console\Contract\Command;
 use KaririCode\Console\Contract\Input;
 use KaririCode\Console\Contract\InputDefinition;
 use KaririCode\Console\Contract\Output;
+use KaririCode\Console\Enum\ExitCode;
 use KaririCode\Console\ValueObject\OptionDescriptor;
 
 /**
- * Compares installed KaririCode packages against the V4.0 baseline.
+ * Compares installed KaririCode packages against the lowest release of
+ * each one that the Spec V4.3.3 / ARFA 1.3 line works with
+ * (MINIMUM_VERSIONS).
  *
  * Reads composer.lock from the working directory — both "packages" and
  * "packages-dev", since the CLI and the Devkit are usually installed as
@@ -34,25 +38,36 @@ use KaririCode\Console\ValueObject\OptionDescriptor;
  * References: SPEC-001 §5.
  * @see https://getcomposer.org/doc/01-basic-usage.md#commit-your-composer-lock-file-to-version-control
  */
-#[AsCommand(name: 'check:ecosystem', description: 'Verify all KaririCode packages are V4.0 / ARFA 1.3 compatible')]
+#[AsCommand(name: 'check:ecosystem', description: 'Compare installed KaririCode packages with the Spec V4.3.3 / ARFA 1.3 line')]
 final class CheckEcosystemCommand implements Command
 {
-    /** Minimum version this CLI expects of each KaririCode package. */
+    public string $name {
+        get => 'check:ecosystem';
+    }
+
+    public string $description {
+        get => 'Compare installed KaririCode packages with the Spec V4.3.3 / ARFA 1.3 line';
+    }
+
+    /**
+     * Lowest Packagist release of each package that the Spec V4.3.3 /
+     * ARFA 1.3 line works with (contract 2.12.0: console 4.6 and
+     * property-inspector 3.0 require it). A package joins the list when its
+     * release for the line is published; until then it is not judged.
+     */
     private const array MINIMUM_VERSIONS = [
-        'kariricode/contract'             => '4.0.0',
-        'kariricode/processor-pipeline'   => '4.0.0',
-        'kariricode/property-inspector'   => '4.0.0',
-        'kariricode/class-discovery'      => '3.2.0',
-        'kariricode/dependency-injection' => '4.0.0',
-        'kariricode/cache'                => '4.0.0',
-        'kariricode/logging'              => '4.0.0',
-        'kariricode/validator'            => '4.0.0',
-        'kariricode/sanitizer'            => '4.0.0',
-        'kariricode/event-dispatcher'     => '4.0.0',
-        'kariricode/console'              => '4.1.0',
-        'kariricode/parser'               => '4.0.0',
+        'kariricode/contract'           => '2.12.0',
+        'kariricode/exception'          => '2.0.0',
+        'kariricode/class-discovery'    => '2.0.0',
+        'kariricode/property-inspector' => '3.0.0',
+        'kariricode/processor-pipeline' => '3.0.0',
+        'kariricode/cache'              => '4.1.0',
+        'kariricode/console'            => '4.6.0',
+        'kariricode/router'             => '4.1.0',
+        'kariricode/database'           => '4.4.0',
     ];
 
+    #[\Override]
     public function configure(InputDefinition $definition): void
     {
         $definition->addOption(new OptionDescriptor(
@@ -63,27 +78,25 @@ final class CheckEcosystemCommand implements Command
         ));
     }
 
-    public function execute(Input $input, Output $output): int
+    #[\Override]
+    public function execute(Input $input, Output $output): ExitCode
     {
         $lock = $this->readLock($output);
 
         if ($lock === null) {
-            return 1;
+            return ExitCode::Failure;
         }
 
-        $results = $this->compare($this->indexPackages([
-            ...(is_array($lock['packages'] ?? null) ? $lock['packages'] : []),
-            ...(is_array($lock['packages-dev'] ?? null) ? $lock['packages-dev'] : []),
-        ]));
-        $failed = count(array_filter($results, static fn(array $row): bool => $row['status'] === 'OUTDATED'));
+        $results = $this->compare(self::installedVersions($lock));
+        $failed  = count(array_filter($results, static fn(array $row): bool => $row['status'] === 'OUTDATED'));
 
-        if ((bool) $input->getOption('json')) {
+        if (InputValue::flag($input, 'json')) {
             $output->writeln(json_encode(
                 $results,
                 JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
             ));
 
-            return $failed > 0 ? 1 : 0;
+            return $failed > 0 ? ExitCode::Failure : ExitCode::Success;
         }
 
         $this->renderTable($results, $output);
@@ -91,7 +104,7 @@ final class CheckEcosystemCommand implements Command
             ? '<info>✓ Every installed KaririCode package meets the minimum version this CLI expects.</info>'
             : "<error>✗ {$failed} package(s) below the minimum version this CLI expects.</error>");
 
-        return $failed === 0 ? 0 : 1;
+        return $failed === 0 ? ExitCode::Success : ExitCode::Failure;
     }
 
     /** @return array<mixed>|null null once the problem has been reported */
@@ -149,37 +162,59 @@ final class CheckEcosystemCommand implements Command
     private function evaluate(?string $version, string $minimum): string
     {
         return match (true) {
-            $version === null => 'NOT INSTALLED',
+            $version === null                                                    => 'NOT INSTALLED',
             str_starts_with($version, 'dev-') || str_ends_with($version, '-dev') => 'DEV',
-            version_compare($version, $minimum, '>=') => 'OK',
-            default => 'OUTDATED',
+            version_compare($version, $minimum, '>=')                            => 'OK',
+            default                                                              => 'OUTDATED',
         };
     }
 
     /**
-     * @param  list<array<string,mixed>> $packages
-     * @return array<string,string> package → version
+     * Package name → installed version (without a leading "v"), from the
+     * packages and packages-dev lists of the lock. Entries of another shape
+     * are skipped rather than cast.
+     *
+     * @param  array<mixed> $lock
+     * @return array<string, string>
      */
-    private function indexPackages(array $packages): array
+    private static function installedVersions(array $lock): array
     {
         $index = [];
 
-        foreach ($packages as $package) {
-            $name = (string) ($package['name'] ?? '');
-
-            if ($name !== '') {
-                $index[$name] = ltrim((string) ($package['version'] ?? ''), 'v');
+        foreach (['packages', 'packages-dev'] as $section) {
+            foreach (self::entries($lock[$section] ?? null) as $package) {
+                if (isset($package['name'], $package['version']) && is_string($package['name']) && is_string($package['version']) && $package['name'] !== '') {
+                    $index[$package['name']] = ltrim($package['version'], 'v');
+                }
             }
         }
 
         return $index;
     }
 
+    /** @return list<array<mixed>> */
+    private static function entries(mixed $list): array
+    {
+        if (!is_array($list)) {
+            return [];
+        }
+
+        $entries = [];
+
+        foreach (array_keys($list) as $key) {
+            if (is_array($list[$key])) {
+                $entries[] = $list[$key];
+            }
+        }
+
+        return $entries;
+    }
+
     /** @param list<array{package:string,installed:string,minimum:string,status:string}> $results */
     private function renderTable(array $results, Output $output): void
     {
         $output->writeln('');
-        $output->writeln('  <comment>KaririCode Ecosystem — V4.0 Baseline Check</comment>');
+        $output->writeln('  <comment>KaririCode Ecosystem — Spec V4.3.3 / ARFA 1.3 line</comment>');
         $output->writeln('  ' . str_repeat('─', 70));
         $output->writeln(sprintf('  %-40s %-12s %-12s %s', 'PACKAGE', 'INSTALLED', 'MINIMUM', 'STATUS'));
         $output->writeln('  ' . str_repeat('─', 70));
@@ -191,13 +226,10 @@ final class CheckEcosystemCommand implements Command
                 default    => 'comment',
             };
 
-            $output->writeln(sprintf(
-                '  %-40s %-12s %-12s %s',
-                $row['package'],
-                $row['installed'],
-                $row['minimum'],
-                "<{$tag}>{$row['status']}</{$tag}>",
-            ));
+            // mb_str_pad: "—" is one column but three bytes, and sprintf()
+            // pads by bytes, which shifted the MINIMUM column.
+            $output->writeln('  ' . mb_str_pad($row['package'], 40) . ' ' . mb_str_pad($row['installed'], 12)
+                . ' ' . mb_str_pad($row['minimum'], 12) . " <{$tag}>{$row['status']}</{$tag}>");
         }
 
         $output->writeln('');

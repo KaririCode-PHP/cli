@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KaririCode\Cli\Command\Inspect;
 
+use KaririCode\Cli\Application\InputValue;
 use KaririCode\Cli\Enum\OutputFormat;
 use KaririCode\Cli\Inspector\RouterInspector;
 use KaririCode\Cli\Template\OutputRenderer;
@@ -13,6 +14,7 @@ use KaririCode\Console\Contract\Command;
 use KaririCode\Console\Contract\Input;
 use KaririCode\Console\Contract\InputDefinition;
 use KaririCode\Console\Contract\Output;
+use KaririCode\Console\Enum\ExitCode;
 use KaririCode\Console\ValueObject\OptionDescriptor;
 
 /**
@@ -33,11 +35,20 @@ use KaririCode\Console\ValueObject\OptionDescriptor;
 #[AsCommand(name: 'inspect:router', description: 'List all registered routes')]
 final class InspectRouterCommand implements Command
 {
+    public string $name {
+        get => 'inspect:router';
+    }
+
+    public string $description {
+        get => 'List all registered routes';
+    }
+
     public function __construct(
         private readonly RouterInspector $inspector,
         private readonly OutputRenderer $renderer,
     ) {}
 
+    #[\Override]
     public function configure(InputDefinition $definition): void
     {
         $definition->addOption(new OptionDescriptor(
@@ -59,11 +70,12 @@ final class InspectRouterCommand implements Command
         ));
     }
 
-    public function execute(Input $input, Output $output): int
+    #[\Override]
+    public function execute(Input $input, Output $output): ExitCode
     {
-        $format     = OutputFormat::fromString((string) ($input->getOption('format') ?? 'table'));
-        $methodFilter = strtoupper((string) ($input->getOption('method') ?? ''));
-        $pathFilter   = strtolower((string) ($input->getOption('path') ?? ''));
+        $format       = OutputFormat::fromString(InputValue::text($input, 'format', 'table'));
+        $methodFilter = strtoupper(InputValue::text($input, 'method', ''));
+        $pathFilter   = strtolower(InputValue::text($input, 'path', ''));
 
         $result = $this->inspector->inspect();
 
@@ -85,6 +97,6 @@ final class InspectRouterCommand implements Command
 
         $this->renderer->render($filtered, $output, $format);
 
-        return 0;
+        return ExitCode::Success;
     }
 }

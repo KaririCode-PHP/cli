@@ -9,16 +9,25 @@ use KaririCode\Cli\ValueObject\GeneratedFile;
 use KaririCode\Cli\ValueObject\GeneratorContext;
 
 /**
- * Generates a KaririCode\Parser NodeVisitor implementation.
+ * Generates a NodeVisitor for kariricode/parser.
  *
- * A Visitor traverses the AST produced by the Parser and collects or
- * transforms nodes without modifying the tree (Visitor pattern — GoF §331).
- * Implements KaririCode\Parser\Contract\NodeVisitor.
+ * The generated class implements KaririCode\Parser\Contract\NodeVisitor
+ * as kariricode/parser 4.1 declares it: NodeTraverser calls enterNode()
+ * before a node's children and leaveNode() after them, and a returned
+ * Node replaces the visited one, while null keeps it (Visitor pattern).
  *
- * The scaffold includes the enterNode / leaveNode pair and a typed
- * result() accessor — the canonical pattern used by all built-in
- * visitors (ASTDumper, SymbolCollector, DiagnosticEmitter).
+ * ARFA 1.3: P1 (the output depends only on the GeneratorContext).
+ * Spec V4.3.3: stateless generator, final class.
  *
+ * Preconditions: the context passed GeneratorContext validation.
+ * Thread-safety: stateless; safe to share between fibers.
+ * Side effects: none; FileWriter writes the returned files (ADR-005).
+ *
+ * Example:
+ *   $files = (new VisitorGenerator())->generate($context);
+ *
+ * References: ADR-011 (kariricode/parser stays optional), ADR-012.
+ * @see https://en.wikipedia.org/wiki/Visitor_pattern
  */
 final class VisitorGenerator implements Generator
 {
@@ -26,6 +35,7 @@ final class VisitorGenerator implements Generator
         get => 'Visitor';
     }
 
+    #[\Override]
     public function generate(GeneratorContext $context): array
     {
         $namespace = $context->namespace;
@@ -44,61 +54,42 @@ final class VisitorGenerator implements Generator
         /**
          * AST visitor: {$class}.
          *
-         * Traverses the parse tree and collects or transforms nodes.
-         * Register via \$parser->addVisitor(new {$class}()) before
-         * calling parse() so the visitor receives every node in
-         * source order.
+         * Walks the tree that kariricode/parser produces. NodeTraverser calls
+         * enterNode() before a node's children and leaveNode() after them; a
+         * returned Node replaces the visited one, null keeps it.
          *
          * ARFA 1.3: P4. Spec V4.3.3: AST visitor for kariricode/parser.
          *
          * Preconditions: used for one traversal at a time.
          * Thread-safety: holds traversal state; one instance per traversal.
-         * Side effects: accumulates results in memory.
+         * Side effects: collects nodes in memory.
          *
          * Example:
-         *   \$visitor = new {$class}();
+         *   (new NodeTraverser())->addVisitor(\$visitor = new {$class}())->traverse(\$ast);
          *
          * References:
          * @see https://en.wikipedia.org/wiki/Visitor_pattern
          */
         final class {$class} implements NodeVisitor
         {
-            /** @var list<mixed> Accumulated results during traversal. */
-            private array \$results = [];
+            /** @var list<Node> Nodes collected during the traversal. */
+            public private(set) array \$results = [];
 
-            /**
-             * Called on entering each AST node (pre-order).
-             *
-             * Return false to skip descending into this node's children.
-             */
-            public function enterNode(Node \$node): bool
+            #[\Override]
+            public function enterNode(Node \$node): ?Node
             {
-                // TODO: match on node type and collect/transform
-                return true;
+                // TODO: match on the node type; collect it, or return a replacement
+                return null;
             }
 
-            /**
-             * Called on leaving each AST node (post-order).
-             */
-            public function leaveNode(Node \$node): void
+            #[\Override]
+            public function leaveNode(Node \$node): ?Node
             {
-                // TODO: finalize results after children are visited
+                // TODO: finish the work that needs the node's children
+                return null;
             }
 
-            /**
-             * Returns accumulated results after full traversal.
-             *
-             * @return list<mixed>
-             */
-            public function results(): array
-            {
-                return \$this->results;
-            }
-
-            /**
-             * Resets accumulated state so the visitor can be reused
-             * across multiple parse runs.
-             */
+            /** Clears the collected nodes so the instance can walk another tree. */
             public function reset(): void
             {
                 \$this->results = [];

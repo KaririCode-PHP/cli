@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KaririCode\Cli\Command\Inspect;
 
+use KaririCode\Cli\Application\InputValue;
 use KaririCode\Cli\Enum\OutputFormat;
 use KaririCode\Cli\Inspector\ContainerInspector;
 use KaririCode\Cli\Template\OutputRenderer;
@@ -13,6 +14,7 @@ use KaririCode\Console\Contract\Command;
 use KaririCode\Console\Contract\Input;
 use KaririCode\Console\Contract\InputDefinition;
 use KaririCode\Console\Contract\Output;
+use KaririCode\Console\Enum\ExitCode;
 use KaririCode\Console\ValueObject\OptionDescriptor;
 
 /**
@@ -33,11 +35,20 @@ use KaririCode\Console\ValueObject\OptionDescriptor;
 #[AsCommand(name: 'inspect:container', description: 'Inspect DI container bindings')]
 final class InspectContainerCommand implements Command
 {
+    public string $name {
+        get => 'inspect:container';
+    }
+
+    public string $description {
+        get => 'Inspect DI container bindings';
+    }
+
     public function __construct(
         private readonly ContainerInspector $inspector,
         private readonly OutputRenderer $renderer,
     ) {}
 
+    #[\Override]
     public function configure(InputDefinition $definition): void
     {
         $definition->addOption(new OptionDescriptor(
@@ -53,10 +64,11 @@ final class InspectContainerCommand implements Command
         ));
     }
 
-    public function execute(Input $input, Output $output): int
+    #[\Override]
+    public function execute(Input $input, Output $output): ExitCode
     {
-        $format = OutputFormat::fromString((string) ($input->getOption('format') ?? 'table'));
-        $filter = strtolower((string) ($input->getOption('filter') ?? ''));
+        $format = OutputFormat::fromString(InputValue::text($input, 'format', 'table'));
+        $filter = strtolower(InputValue::text($input, 'filter', ''));
 
         $result = $this->inspector->inspect();
 
@@ -76,6 +88,6 @@ final class InspectContainerCommand implements Command
 
         $this->renderer->render($result, $output, $format);
 
-        return 0;
+        return ExitCode::Success;
     }
 }

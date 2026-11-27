@@ -10,7 +10,7 @@ use KaririCode\Contract\Exception\NotFound;
  * No generator is registered for the requested GeneratorTarget.
  *
  * ARFA 1.3: P4. Spec V4.3.3: exception of the NotFound family, codes
- * 8620–8639 of the CLI block.
+ * 8920–8939 of the CLI block.
  *
  * Preconditions: the target label comes from the GeneratorTarget enum, never
  * from raw user input.
@@ -32,6 +32,6 @@ final class GeneratorNotFoundException extends \RuntimeException implements NotF
 
     public static function forTarget(string $target): self
     {
-        return new self("[CLI_8620] No generator is registered for target {$target}.", 8620);
+        return new self("[CLI_8920] No generator is registered for target {$target}.", 8920);
     }
 }

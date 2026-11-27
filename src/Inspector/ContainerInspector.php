@@ -6,6 +6,7 @@ namespace KaririCode\Cli\Inspector;
 
 use KaririCode\Cli\Contract\BindingSource;
 use KaririCode\Cli\Contract\Inspector;
+use KaririCode\Cli\ValueObject\BindingEntry;
 use KaririCode\Cli\ValueObject\InspectionResult;
 
 /**
@@ -34,6 +35,7 @@ final class ContainerInspector implements Inspector
         private readonly ?BindingSource $source = null,
     ) {}
 
+    #[\Override]
     public function inspect(): InspectionResult
     {
         if ($this->source === null) {
@@ -44,17 +46,17 @@ final class ContainerInspector implements Inspector
             );
         }
 
+        $bindings = iterator_to_array($this->source->bindings(), false);
+        usort($bindings, static fn(BindingEntry $a, BindingEntry $b): int => strcmp($a->abstract, $b->abstract));
         $rows = [];
 
-        foreach ($this->source->bindings() as $binding) {
+        foreach ($bindings as $binding) {
             $rows[] = [
                 'abstract'  => $binding->abstract,
                 'concrete'  => $binding->concrete,
                 'singleton' => $binding->singleton ? 'yes' : 'no',
             ];
         }
-
-        usort($rows, static fn(array $a, array $b): int => strcmp($a['abstract'], $b['abstract']));
 
         return new InspectionResult(
             componentName: $this->componentName,

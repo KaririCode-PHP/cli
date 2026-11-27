@@ -18,6 +18,18 @@ use KaririCode\Cli\ValueObject\GeneratorContext;
  * outside and only changes through the entity's own methods, so no
  * Java-style getters are generated.
  *
+ * ARFA 1.3: P1 (the output depends only on the GeneratorContext).
+ * Spec V4.3.3: stateless generator, final class.
+ *
+ * Preconditions: the context passed GeneratorContext validation.
+ * Thread-safety: stateless; safe to share between fibers.
+ * Side effects: none; FileWriter writes the returned files (ADR-005).
+ *
+ * Example:
+ *   $files = (new EntityGenerator())->generate($context);
+ *
+ * References: ADR-012.
+ * @see https://www.php.net/manual/en/language.oop5.visibility.php#language.oop5.visibility-members-aviz
  */
 final class EntityGenerator implements Generator
 {
@@ -28,6 +40,7 @@ final class EntityGenerator implements Generator
         get => 'Entity';
     }
 
+    #[\Override]
     public function generate(GeneratorContext $context): array
     {
         return [
@@ -98,6 +111,7 @@ final class EntityGenerator implements Generator
         PHP;
     }
 
+    /** @param list<FieldDescriptor> $fields */
     private function buildConstructorParams(array $fields): string
     {
         $indent = self::PARAM_INDENT;
@@ -110,6 +124,7 @@ final class EntityGenerator implements Generator
         return implode("\n", $lines);
     }
 
+    /** @param list<FieldDescriptor> $fields */
     private function buildFactorySig(array $fields): string
     {
         if ($fields === []) {
@@ -122,6 +137,7 @@ final class EntityGenerator implements Generator
         ));
     }
 
+    /** @param list<FieldDescriptor> $fields */
     private function buildFactoryCall(array $fields): string
     {
         if ($fields === []) {

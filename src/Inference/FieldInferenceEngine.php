@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace KaririCode\Cli\Inference;
 
-use KaririCode\Cli\Exception\InvalidScaffoldRequestException;
 use KaririCode\Cli\Enum\FieldType;
+use KaririCode\Cli\Exception\InvalidScaffoldRequestException;
 use KaririCode\Cli\ValueObject\FieldDescriptor;
 
 /**
@@ -27,7 +27,7 @@ use KaririCode\Cli\ValueObject\FieldDescriptor;
  *
  * ARFA 1.3: P3 (adaptive context). Spec V4.3.3: stateless service.
  *
- * Preconditions: tokens follow name[:type]; anything else raises 8602.
+ * Preconditions: tokens follow name[:type]; anything else raises 8902.
  * Thread-safety: stateless; safe to share.
  * Side effects: none.
  *
@@ -43,51 +43,51 @@ final class FieldInferenceEngine
 
     /** @var array<string, array{validators: list<string>, sanitizers: list<string>}> */
     private const array NAME_RULES = [
-        'email'        => ['validators' => ['NotBlank', 'Email'], 'sanitizers' => ['Trim', 'Lowercase']],
-        'password'     => ['validators' => ['NotBlank', 'Length(min:8)'], 'sanitizers' => ['Trim']],
-        'name'         => ['validators' => ['NotBlank', 'Length(max:255)'], 'sanitizers' => ['Trim', 'Capitalize']],
-        'first_name'   => ['validators' => ['NotBlank', 'Length(max:100)'], 'sanitizers' => ['Trim', 'Capitalize']],
-        'last_name'    => ['validators' => ['NotBlank', 'Length(max:100)'], 'sanitizers' => ['Trim', 'Capitalize']],
-        'username'     => ['validators' => ['NotBlank', 'AlphaNumeric', 'Length(min:3,max:30)'], 'sanitizers' => ['Trim', 'Lowercase']],
-        'phone'        => ['validators' => ['NotBlank', 'Phone'], 'sanitizers' => ['Trim', 'Digits']],
-        'cpf'          => ['validators' => ['NotBlank', 'Cpf'], 'sanitizers' => ['Trim', 'Digits']],
-        'cnpj'         => ['validators' => ['NotBlank', 'Cnpj'], 'sanitizers' => ['Trim', 'Digits']],
-        'url'          => ['validators' => ['NotBlank', 'Url'], 'sanitizers' => ['Trim']],
-        'website'      => ['validators' => ['Url'], 'sanitizers' => ['Trim']],
-        'slug'         => ['validators' => ['NotBlank', 'Slug'], 'sanitizers' => ['Trim', 'Lowercase', 'Slugify']],
-        'title'        => ['validators' => ['NotBlank', 'Length(max:255)'], 'sanitizers' => ['Trim', 'Capitalize']],
-        'description'  => ['validators' => ['Length(max:2000)'], 'sanitizers' => ['Trim', 'StripTags']],
-        'content'      => ['validators' => ['NotBlank'], 'sanitizers' => ['Trim', 'StripTags']],
-        'zip_code'     => ['validators' => ['NotBlank', 'ZipCode'], 'sanitizers' => ['Trim', 'Digits']],
-        'postal_code'  => ['validators' => ['NotBlank', 'ZipCode'], 'sanitizers' => ['Trim', 'Digits']],
-        'price'        => ['validators' => ['NotBlank', 'Positive'], 'sanitizers' => []],
-        'amount'       => ['validators' => ['NotBlank', 'Positive'], 'sanitizers' => []],
-        'quantity'     => ['validators' => ['NotBlank', 'Positive'], 'sanitizers' => []],
-        'age'          => ['validators' => ['NotBlank', 'Range(min:0,max:150)'], 'sanitizers' => []],
-        'status'       => ['validators' => ['NotBlank'], 'sanitizers' => ['Trim', 'Lowercase']],
-        'token'        => ['validators' => ['NotBlank'], 'sanitizers' => ['Trim']],
-        'uuid'         => ['validators' => ['NotBlank', 'Uuid'], 'sanitizers' => ['Trim', 'Lowercase']],
-        'ip_address'   => ['validators' => ['Ip'], 'sanitizers' => ['Trim']],
-        'locale'       => ['validators' => ['Locale'], 'sanitizers' => ['Trim', 'Lowercase']],
-        'timezone'     => ['validators' => ['Timezone'], 'sanitizers' => ['Trim']],
-        'currency'     => ['validators' => ['Currency'], 'sanitizers' => ['Trim', 'Uppercase']],
-        'color'        => ['validators' => ['HexColor'], 'sanitizers' => ['Trim', 'Lowercase']],
-        'birth_date'   => ['validators' => ['NotBlank', 'Date'], 'sanitizers' => []],
-        'created_at'   => ['validators' => [], 'sanitizers' => []],
-        'updated_at'   => ['validators' => [], 'sanitizers' => []],
+        'email'       => ['validators' => ['NotBlank', 'Email'], 'sanitizers' => ['Trim', 'Lowercase']],
+        'password'    => ['validators' => ['NotBlank', 'Length(min:8)'], 'sanitizers' => ['Trim']],
+        'name'        => ['validators' => ['NotBlank', 'Length(max:255)'], 'sanitizers' => ['Trim', 'Capitalize']],
+        'first_name'  => ['validators' => ['NotBlank', 'Length(max:100)'], 'sanitizers' => ['Trim', 'Capitalize']],
+        'last_name'   => ['validators' => ['NotBlank', 'Length(max:100)'], 'sanitizers' => ['Trim', 'Capitalize']],
+        'username'    => ['validators' => ['NotBlank', 'AlphaNumeric', 'Length(min:3,max:30)'], 'sanitizers' => ['Trim', 'Lowercase']],
+        'phone'       => ['validators' => ['NotBlank', 'Phone'], 'sanitizers' => ['Trim', 'Digits']],
+        'cpf'         => ['validators' => ['NotBlank', 'Cpf'], 'sanitizers' => ['Trim', 'Digits']],
+        'cnpj'        => ['validators' => ['NotBlank', 'Cnpj'], 'sanitizers' => ['Trim', 'Digits']],
+        'url'         => ['validators' => ['NotBlank', 'Url'], 'sanitizers' => ['Trim']],
+        'website'     => ['validators' => ['Url'], 'sanitizers' => ['Trim']],
+        'slug'        => ['validators' => ['NotBlank', 'Slug'], 'sanitizers' => ['Trim', 'Lowercase', 'Slugify']],
+        'title'       => ['validators' => ['NotBlank', 'Length(max:255)'], 'sanitizers' => ['Trim', 'Capitalize']],
+        'description' => ['validators' => ['Length(max:2000)'], 'sanitizers' => ['Trim', 'StripTags']],
+        'content'     => ['validators' => ['NotBlank'], 'sanitizers' => ['Trim', 'StripTags']],
+        'zip_code'    => ['validators' => ['NotBlank', 'ZipCode'], 'sanitizers' => ['Trim', 'Digits']],
+        'postal_code' => ['validators' => ['NotBlank', 'ZipCode'], 'sanitizers' => ['Trim', 'Digits']],
+        'price'       => ['validators' => ['NotBlank', 'Positive'], 'sanitizers' => []],
+        'amount'      => ['validators' => ['NotBlank', 'Positive'], 'sanitizers' => []],
+        'quantity'    => ['validators' => ['NotBlank', 'Positive'], 'sanitizers' => []],
+        'age'         => ['validators' => ['NotBlank', 'Range(min:0,max:150)'], 'sanitizers' => []],
+        'status'      => ['validators' => ['NotBlank'], 'sanitizers' => ['Trim', 'Lowercase']],
+        'token'       => ['validators' => ['NotBlank'], 'sanitizers' => ['Trim']],
+        'uuid'        => ['validators' => ['NotBlank', 'Uuid'], 'sanitizers' => ['Trim', 'Lowercase']],
+        'ip_address'  => ['validators' => ['Ip'], 'sanitizers' => ['Trim']],
+        'locale'      => ['validators' => ['Locale'], 'sanitizers' => ['Trim', 'Lowercase']],
+        'timezone'    => ['validators' => ['Timezone'], 'sanitizers' => ['Trim']],
+        'currency'    => ['validators' => ['Currency'], 'sanitizers' => ['Trim', 'Uppercase']],
+        'color'       => ['validators' => ['HexColor'], 'sanitizers' => ['Trim', 'Lowercase']],
+        'birth_date'  => ['validators' => ['NotBlank', 'Date'], 'sanitizers' => []],
+        'created_at'  => ['validators' => [], 'sanitizers' => []],
+        'updated_at'  => ['validators' => [], 'sanitizers' => []],
     ];
 
     // ── Type → (validators, sanitizers) ──────────────────────────────────
 
     /** @var array<string, array{validators: list<string>, sanitizers: list<string>}> */
     private const array TYPE_RULES = [
-        'email'  => ['validators' => ['Email'], 'sanitizers' => ['Lowercase']],
-        'url'    => ['validators' => ['Url'], 'sanitizers' => ['Trim']],
-        'phone'  => ['validators' => ['Phone'], 'sanitizers' => ['Digits']],
-        'cpf'    => ['validators' => ['Cpf'], 'sanitizers' => ['Digits']],
-        'cnpj'   => ['validators' => ['Cnpj'], 'sanitizers' => ['Digits']],
-        'money'  => ['validators' => ['Positive'], 'sanitizers' => []],
-        'uuid'   => ['validators' => ['Uuid'], 'sanitizers' => ['Lowercase']],
+        'email' => ['validators' => ['Email'], 'sanitizers' => ['Lowercase']],
+        'url'   => ['validators' => ['Url'], 'sanitizers' => ['Trim']],
+        'phone' => ['validators' => ['Phone'], 'sanitizers' => ['Digits']],
+        'cpf'   => ['validators' => ['Cpf'], 'sanitizers' => ['Digits']],
+        'cnpj'  => ['validators' => ['Cnpj'], 'sanitizers' => ['Digits']],
+        'money' => ['validators' => ['Positive'], 'sanitizers' => []],
+        'uuid'  => ['validators' => ['Uuid'], 'sanitizers' => ['Lowercase']],
     ];
 
     // ── Public API ───────────────────────────────────────────────────────
@@ -101,8 +101,8 @@ final class FieldInferenceEngine
      */
     public function enrich(FieldDescriptor $field): FieldDescriptor
     {
-        $nameKey  = strtolower($field->name);
-        $typeKey  = strtolower($field->type->name);
+        $nameKey = strtolower($field->name);
+        $typeKey = strtolower($field->type->name);
 
         $nameRule = self::NAME_RULES[$nameKey] ?? null;
         $typeRule = self::TYPE_RULES[$typeKey] ?? null;
@@ -159,10 +159,10 @@ final class FieldInferenceEngine
             return [];
         }
 
-        return array_values(array_map(
+        return array_map(
             fn(string $token) => $this->parseAndEnrich(trim($token)),
             explode(',', $fieldsString),
-        ));
+        );
     }
 
     // ── Private ──────────────────────────────────────────────────────────

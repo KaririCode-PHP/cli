@@ -34,6 +34,7 @@ final class RouterInspector implements Inspector
         private readonly ?RouteSource $source = null,
     ) {}
 
+    #[\Override]
     public function inspect(): InspectionResult
     {
         if ($this->source === null) {
@@ -48,8 +49,8 @@ final class RouterInspector implements Inspector
         $byMethod = [];
 
         foreach ($this->source->routes() as $route) {
-            $method   = strtoupper($route->method);
-            $rows[]   = ['method' => $method, 'path' => $route->path, 'handler' => $route->handler, 'name' => $route->name];
+            $method            = strtoupper($route->method);
+            $rows[]            = ['method' => $method, 'path' => $route->path, 'handler' => $route->handler, 'name' => $route->name];
             $byMethod[$method] = ($byMethod[$method] ?? 0) + 1;
         }
 

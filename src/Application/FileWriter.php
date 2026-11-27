@@ -43,8 +43,8 @@ final class FileWriter
     /**
      * Writes $file to disk (or returns a dry-run report).
      *
-     * @throws ScaffoldFailureException 8640 when the file exists and force is off,
-     *                                  8641 when the directory or file cannot be written
+     * @throws ScaffoldFailureException 8940 when the file exists and force is off,
+     *                                  8941 when the directory or file cannot be written
      */
     public function write(GeneratedFile $file): WriteOutcome
     {
@@ -87,7 +87,7 @@ final class FileWriter
      * @param  list<GeneratedFile> $files
      * @return list<WriteOutcome>
      *
-     * @throws ScaffoldFailureException 8640 before any write when one target already exists
+     * @throws ScaffoldFailureException 8940 before any write when one target already exists
      */
     public function writeAll(array $files): array
     {

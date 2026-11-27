@@ -17,8 +17,8 @@ use KaririCode\Cli\Exception\InvalidScaffoldRequestException;
  *
  * ARFA 1.3: P1 (immutable state). Spec V4.3.3: Value Object, final readonly.
  *
- * Preconditions: PascalCase class name that is not reserved (8600); namespace of PHP
- * identifiers (8601).
+ * Preconditions: PascalCase class name that is not reserved (8900); namespace of PHP
+ * identifiers (8901).
  * Thread-safety: immutable; safe to share between fibers.
  * Side effects: none.
  *
@@ -49,7 +49,7 @@ final readonly class GeneratorContext
     /**
      * @param list<FieldDescriptor> $fields
      *
-     * @throws InvalidScaffoldRequestException 8600 (class name) or 8601 (namespace)
+     * @throws InvalidScaffoldRequestException 8900 (class name) or 8901 (namespace)
      */
     public function __construct(
         public string $className,

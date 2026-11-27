@@ -36,6 +36,7 @@ final class ArfaComplianceInspector implements Inspector
         private readonly ComplianceEngine $engine = new RegexComplianceEngine(),
     ) {}
 
+    #[\Override]
     public function inspect(): InspectionResult
     {
         return $this->engine->scan($this->sourcePath);
