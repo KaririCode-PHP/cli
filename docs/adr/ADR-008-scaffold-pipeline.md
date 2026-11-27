@@ -17,7 +17,7 @@ The seven `make:*` commands each copied the same generate → write → report l
 
 ## Decision
 
-1. `GeneratorContext` validates in its constructor: the class name must be PascalCase and not a PHP reserved word (8600), and the namespace must be backslash-separated identifiers (8601). An invalid context cannot exist.
+1. `GeneratorContext` validates in its constructor: the class name must be PascalCase and not a PHP reserved word (8900), and the namespace must be backslash-separated identifiers (8901). An invalid context cannot exist.
 2. `ScaffoldRunner` (composition, no base class) owns the pipeline: registry lookup → `Generator::generate()` → `FileWriter::writeAll()` → uniform status and dry-run output. It also normalises names (`className()`) and paths (`outputPath()`).
 3. `FileWriter::writeAll()` runs a collision pre-flight over the whole batch before the first write.
 4. Every `make:*` command catches `the CLI exceptions (ADR-009)`, prints `<error>` and returns exit code 1.

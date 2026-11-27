@@ -3,7 +3,8 @@
 ## Workflow
 
 1. Branch from `main`; one concern per pull request.
-2. Run `composer check` (CS, PHPStan, Psalm, complexity, tests, security) and
+2. Install the pinned toolchain once with `kcode init` (ADR-013), then run
+   `composer check` (CS, PHPStan, Psalm, complexity, tests, security) and
    `composer infection` before pushing. CI runs the same gates.
 3. Add a CHANGELOG entry under the unreleased version.
 4. Architectural decisions get an ADR in `docs/adr/` named
@@ -23,7 +24,7 @@
   `References:` with an `@see` URL. No `@package`, `@author`, `@license` or
   `@since`. Section markers are 72 columns.
 - Exceptions: one `kariricode/contract` family per class, private constructor,
-  static factories, codes in 8600–8699 with a `[CLI_86xx]` prefix, no rejected
+  static factories, codes in 8900–8999 with a `[CLI_89xx]` prefix, no rejected
   value in validation messages (ADR-009). New `catch` types must be added to
   `REVIEWED_CATCHES` in `tests/Conformance/SpecConformanceTest.php` with a
   reason in the pull request.

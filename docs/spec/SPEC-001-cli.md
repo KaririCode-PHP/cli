@@ -14,8 +14,8 @@ request path.
 
 | Package | Constraint | Role |
 |---|---|---|
-| `kariricode/contract` | ^2.11 | Exception families (ADR-009); `DI\ServiceProvider`, `DI\BindableContainer` |
-| `kariricode/console` | ^4.1 | Host framework: commands implement its `Command` contract (documented §31 exception) |
+| `kariricode/contract` | ^2.12 | Exception families (ADR-009); `DI\ServiceProvider`, `DI\BindableContainer` |
+| `kariricode/console` | ^4.6 | Host framework: commands implement its `Command` contract, with `$name` and `$description` properties and an `ExitCode` result (documented §31 exception; ADR-001, amendment) |
 | `ext-json`, `ext-mbstring` | * | JSON output; display-width-aware tables |
 
 Optional capabilities arrive through CLI-owned ports, implemented by the
@@ -51,9 +51,10 @@ before the first write and never overwrites without `--force` (ADR-005, ADR-008)
 | DPO | `final readonly class` | `#[Validate]` / `#[Sanitize]` inferred per field (ADR-002) |
 | Entity | `final class`, `public readonly $id`, `public private(set)` state | named constructor `create()` |
 | Value Object | `final readonly class`, `of()` with guards | guards throw `\InvalidArgumentException` (V16, ADR-012) |
-| Command | `final class` implementing Console `Command` | `#[AsCommand]` |
+| Command | `final class` implementing Console 4.6 `Command` | `#[AsCommand]`, `$name`/`$description` properties, `execute()` returns `ExitCode` |
 | Repository | `interface` + `final class` adapter | aggregate-typed parameters; adapter stubs throw until implemented (V16) |
-| Service, Grammar, Visitor | `final class` | one type per file |
+| Service | `final class` | constructor-injection placeholder |
+| Grammar, Visitor | `final class` implementing kariricode/parser 4.1 `Grammar` / `NodeVisitor` | `id()` and `phpVersionRange()`; `enterNode()`/`leaveNode()` return `?Node` |
 
 Every generated type carries the five documentation elements of §17.
 
@@ -61,15 +62,15 @@ Every generated type carries the five documentation elements of §17.
 
 | Code | Family | Factory |
 |---|---|---|
-| 8600 | Validation | `InvalidScaffoldRequestException::invalidClassName()` |
-| 8601 | Validation | `InvalidScaffoldRequestException::invalidNamespace()` |
-| 8602 | Validation | `InvalidScaffoldRequestException::invalidFieldDefinition()` |
-| 8620 | NotFound | `GeneratorNotFoundException::forTarget(string $target)` |
-| 8640 | Runtime | `ScaffoldFailureException::fileExists(string $path)` |
-| 8641 | Runtime | `ScaffoldFailureException::writeFailed(string $path, string $reason)` |
-| 8642 | Runtime | `ScaffoldFailureException::registrySealed(string $target)` |
+| 8900 | Validation | `InvalidScaffoldRequestException::invalidClassName()` |
+| 8901 | Validation | `InvalidScaffoldRequestException::invalidNamespace()` |
+| 8902 | Validation | `InvalidScaffoldRequestException::invalidFieldDefinition()` |
+| 8920 | NotFound | `GeneratorNotFoundException::forTarget(string $target)` |
+| 8940 | Runtime | `ScaffoldFailureException::fileExists(string $path)` |
+| 8941 | Runtime | `ScaffoldFailureException::writeFailed(string $path, string $reason)` |
+| 8942 | Runtime | `ScaffoldFailureException::registrySealed(string $target)` |
 
-Messages start with `[CLI_86xx]`; validation messages never contain the input.
+Messages start with `[CLI_89xx]`; validation messages never contain the input.
 
 ## 6. Internal taxonomy
 

@@ -1,6 +1,6 @@
 # ADR-010 — Spec Quality Gates and Supply Chain in the Repository
 
-**Status:** Accepted
+**Status:** Accepted; amended by ADR-013 (the tools come from kcode)
 **Date:** 2026-10-01
 
 ## Context

@@ -16,13 +16,13 @@ GeneratorRegistry follows a two-phase lifecycle (ARFA 1.3 P1 — Immutable State
 
 **Phase 1 (builder):** `register()` accepts new generators. Default generators are registered in `__construct()`.
 
-**Phase 2 (sealed):** The first call to `get()` auto-seals the registry. Any subsequent `register()` throws `the CLI exceptions (ADR-009)(8642)`.
+**Phase 2 (sealed):** The first call to `get()` auto-seals the registry. Any subsequent `register()` throws `the CLI exceptions (ADR-009)(8942)`.
 
 ```php
 $registry = new GeneratorRegistry();           // Phase 1
 $registry->register(GeneratorTarget::Dpo, $x); // OK
 $gen = $registry->get(GeneratorTarget::Dpo);    // Auto-seals → Phase 2
-$registry->register(GeneratorTarget::Dpo, $y);  // the CLI exceptions (ADR-009)(8642)
+$registry->register(GeneratorTarget::Dpo, $y);  // the CLI exceptions (ADR-009)(8942)
 ```
 
 ### Alignment

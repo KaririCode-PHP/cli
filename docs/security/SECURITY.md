@@ -18,9 +18,9 @@ who starts it, opens no sockets and executes none of the code it generates.
 
 | Asset or input | Control |
 |---|---|
-| Class names and namespaces | validated before any path is built (8600, 8601); only PHP identifiers reach the file system |
-| `--fields` entries | `name[:type]` grammar (8602); unknown types fall back to `string` |
-| Existing files | never overwritten without `--force` (8640); the batch is checked before the first write; each write takes `LOCK_EX` |
+| Class names and namespaces | validated before any path is built (8900, 8901); only PHP identifiers reach the file system |
+| `--fields` entries | `name[:type]` grammar (8902); unknown types fall back to `string` |
+| Existing files | never overwritten without `--force` (8940); the batch is checked before the first write; each write takes `LOCK_EX` |
 | `--path` and output directories | chosen by the operator, who already owns the working copy |
 | `composer.lock` | decoded with depth 512 and `JSON_THROW_ON_ERROR`; failures exit 1 |
 | Error messages | validation messages never repeat the rejected value (E-047) |

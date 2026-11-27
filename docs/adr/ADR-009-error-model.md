@@ -1,4 +1,4 @@
-# ADR-009 — Error Model: Contract Exception Families in Block 8600–8699
+# ADR-009 — Error Model: Contract Exception Families in Block 8900–8999
 
 **Status:** Accepted
 **Date:** 2026-10-01
@@ -15,19 +15,19 @@ message (E-047).
 
 ## Decision
 
-The CLI takes block **8600–8699**, the next free block after Authenticator
-(8400–8599). Messages start with `[CLI_86xx]`, as CircuitBreaker does with
-`[CB_71xx]`.
+The CLI takes block **8900–8999** of the registry of record,
+`kariricode/exception` `CODE-BLOCKS.md` (see the amendment below). Messages
+start with `[CLI_89xx]`, as CircuitBreaker does with `[CB_71xx]`.
 
 | Range | Family | Class | Codes |
 |---|---|---|---|
-| 8600–8619 | `Validation` | `InvalidScaffoldRequestException` | 8600 class name, 8601 namespace, 8602 `--fields` entry |
-| 8620–8639 | `NotFound` | `GeneratorNotFoundException` | 8620 no generator for the target |
-| 8640–8659 | `Runtime` | `ScaffoldFailureException` | 8640 file exists, 8641 write failed, 8642 registry sealed |
-| 8660–8699 | — | reserved | — |
+| 8900–8919 | `Validation` | `InvalidScaffoldRequestException` | 8900 class name, 8901 namespace, 8902 `--fields` entry |
+| 8920–8939 | `NotFound` | `GeneratorNotFoundException` | 8920 no generator for the target |
+| 8940–8959 | `Runtime` | `ScaffoldFailureException` | 8940 file exists, 8941 write failed, 8942 registry sealed |
+| 8960–8999 | — | reserved | — |
 
-4.0 → 4.1.0: 9200→8640, 9201→8641, 9202→8600, 9203→8602, 9204→8620,
-9205→8601, 9206→8642. 9250 and 9300 had no throw site and are gone.
+4.0 → 4.1.0: 9200→8940, 9201→8941, 9202→8900, 9203→8902, 9204→8920,
+9205→8901, 9206→8942. 9250 and 9300 had no throw site and are gone.
 
 Validation factories take no arguments, so they cannot echo input. Commands
 catch `KaririCode\Contract\Exception\ExceptionInterface` and exit 1;
@@ -38,7 +38,7 @@ catch `KaririCode\Contract\Exception\ExceptionInterface` and exit 1;
 - Callers branch on the family (`instanceof Validation`) instead of a CLI
   class; the edge can map families to exit codes or HTTP statuses.
 - `SpecConformanceTest` checks one family per class, private constructors,
-  unique codes inside 8600–8699 and parameterless validation factories.
+  unique codes inside 8900–8999 and parameterless validation factories.
 - Breaking for code that caught `CliException` or compared 92xx codes.
 - The block still has to be entered in the Spec's error-code registry.
 
@@ -52,4 +52,13 @@ catch `KaririCode\Contract\Exception\ExceptionInterface` and exit 1;
 ## References
 
 - Spec V4.3.3, E-047; `kariricode/contract` 2.11.0 ADR-005 (exception families).
-- ADR-003 (8642), ADR-005 (8640, 8641), ADR-008 (8600, 8601).
+- ADR-003 (8942), ADR-005 (8940, 8941), ADR-008 (8900, 8901).
+
+## Amendment — 2026-11-27: block 8900–8999
+
+The reviewed 4.1.0 took 8600–8699, which kariricode/cache 4.1.0 also claimed
+and released first. Rule 5 of the registry gives a block to the component
+that released codes from it, so the CLI takes the nearest free block of the
+same size, 8900–8999, and every code moves by +300 (8600 → 8900, 8620 →
+8920, 8640 → 8940): the layout of the families inside the block is
+unchanged. 4.1.0 is the first release, so no released code changes.

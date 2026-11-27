@@ -55,3 +55,20 @@ ARFA 1.3 P4 (Protocol Agnosticism): A command class has no dependency on being r
 
 - Gamma, E. et al. (1994). *Design Patterns* — "Favor object composition over class inheritance".
 - ADR-008 — shared scaffold pipeline built by composition.
+
+## Amendment — 2026-11-27: console 4.6 Command contract
+
+Console 4.6 moved the command's name and description onto the interface
+(`public string $name { get; }`, `public string $description { get; }`,
+console ADR-009), and `execute()` returns the `ExitCode` enum (`Success` 0,
+`Failure` 1, `Invalid` 2, console ADR-002) instead of `int`. The reviewed
+4.1.0 was written against 4.1, so `bin/kcli` stopped with a fatal error on
+the first command it loaded. The fourteen commands now declare both
+properties, with the values their `#[AsCommand]` attributes already carried,
+and return `ExitCode`. `check:arfa --fail-on-p1` keeps status 2 for P1-only
+findings through `ExitCode::Invalid`. Arguments and options arrive as
+`mixed`; `Application\InputValue` turns them into the scalar a command needs
+and falls back to the default for a value of another shape, where a cast
+would have produced "Array". `make:command` generates the same shape.
+`tests/Unit/Command/ConsoleContractTest.php` checks every command against the
+contract.

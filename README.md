@@ -3,26 +3,29 @@
 [![PHP](https://img.shields.io/badge/PHP-8.4%2B-blue)](https://www.php.net)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![ARFA](https://img.shields.io/badge/ARFA-1.3-orange)](https://kariricode.org/arfa)
-[![Spec](https://img.shields.io/badge/Spec-V4.0-purple)](https://kariricode.org/spec)
+[![Spec](https://img.shields.io/badge/Spec-V4.3.3-purple)](https://kariricode.org/spec)
 
-**The most professional PHP developer CLI on the market.** Code generation, ecosystem inspection, and ARFA 1.3 compliance checking — zero framework coupling, zero inheritance required.
+`kcli` is the developer CLI of the KaririCode Framework. It scaffolds Spec
+V4.3.3 types, inspects an application through ports it owns, and checks a
+source tree against ARFA 1.3 / Spec V4.3.3 rules. Every command implements
+`KaririCode\Console\Contract\Command` directly, with no base class
+(ADR-001).
 
 ---
 
-## Why KaririCode CLI beats Laravel Artisan
+## What it provides
 
-| Feature | Laravel Artisan | KaririCode CLI V4.0 |
+| Area | Commands | Notes |
 |---|---|---|
-| Command design | Must extend `Illuminate\Console\Command` | Pure interface — zero inheritance |
-| Code generation | Bare skeleton, no validation hints | DPO with auto-inferred validators + sanitizers |
-| Input typing | `$this->argument()` returns `mixed` | Readonly DTO via Console V4.1 `InputMapper` |
-| Brazilian types | None | CPF, CNPJ, CEP, Phone validators built-in |
-| Compliance check | None | `check:arfa` — Spec V4.3.3 static analysis |
-| Ecosystem health | None | `check:ecosystem` — V4.0 baseline verification |
-| Dry-run | None | `--dry-run` on every `make:*` command |
-| Protocol agnostic | Requires CLI process | `ArrayInput` runs commands in tests / HTTP |
-| PHP version | PHP 7.x compatible | PHP 8.4 required — full readonly/enum/hooks |
-| Dependencies | Laravel full stack | `kariricode/console` only |
+| Code generation | `make:dpo`, `make:entity`, `make:value-object`, `make:repository`, `make:service`, `make:command`, `make:grammar`, `make:visitor` | `--dry-run` and `--force` on every `make:*`; DPO rules inferred from field names |
+| Inspection | `inspect:container`, `inspect:router`, `inspect:ast`, `inspect:diagnostics` | read the application through adapters you bind (ADR-011) |
+| Compliance | `check:arfa` | regex engine built in; AST engines plug in through `ComplianceEngine` |
+| Ecosystem | `check:ecosystem` | compares `composer.lock` with the releases of the Spec V4.3.3 line |
+
+Requirements: PHP 8.4 with `json` and `mbstring`, `kariricode/console` ^4.6
+and `kariricode/contract` ^2.12. Generated DPOs name validation and
+sanitization rules (`Cpf`, `Cnpj`, `ZipCode`, ...); kariricode/validator and
+kariricode/sanitizer implement them, not this package.
 
 ---
 
@@ -32,13 +35,7 @@
 composer require kariricode/cli
 ```
 
-Make executable:
-
-```bash
-chmod +x vendor/bin/kcli
-```
-
-Or install globally:
+The binary is `vendor/bin/kcli` (ADR-006). Or install it globally:
 
 ```bash
 composer global require kariricode/cli
@@ -89,7 +86,7 @@ kcli check:ecosystem
 
 ### `make:dpo` — Data Preparation Object
 
-The DPO is KaririCode's production-ready alternative to DTOs and Laravel FormRequests. Fields are inferred from their names: `email` automatically gets `NotBlank` + `Email` validators and `Trim` + `Lowercase` sanitizers. Zero manual setup.
+A DPO (Data Preparation Object) is a `final readonly` class whose fields carry the validation and sanitization rules they need. The rules are inferred from the field names: `email` gets `NotBlank` + `Email` and `Trim` + `Lowercase`. When the name has no rule, the type's rules apply: `document:cpf` gets `Cpf` and `Digits`.
 
 ```bash
 kcli make:dpo UserRegistration \
@@ -138,18 +135,19 @@ final readonly class UserRegistrationDpo
 | `cnpj` | NotBlank, Cnpj | Trim, Digits |
 | `phone` | NotBlank, Phone | Trim, Digits |
 | `slug` | NotBlank, Slug | Trim, Lowercase, Slugify |
-| `url` / `website` | Url | Trim |
+| `url` | NotBlank, Url | Trim |
+| `website` | Url | Trim |
 | `zip_code` | NotBlank, ZipCode | Trim, Digits |
 | `price` / `amount` | NotBlank, Positive | (none) |
 | `uuid` | NotBlank, Uuid | Trim, Lowercase |
 
-### `make:command` — Console V4.1 Command
+### `make:command` — Console 4.6 Command
 
 ```bash
 kcli make:command SendWelcomeEmail --namespace=App\\Command
 ```
 
-Generates a command that implements `KaririCode\Console\Contract\Command` directly. No `extends`. Fully injectable and testable.
+Generates `SendWelcomeEmailCommand`, which implements `KaririCode\Console\Contract\Command` directly: `$name` and `$description` as interface properties, `configure()` for arguments and options, and `execute()` returning `ExitCode`. The command name comes from the class: `send:welcome:email`.
 
 ### `make:entity` — Domain Entity
 
@@ -182,6 +180,18 @@ kcli make:service UserRegistration
 ```
 
 Generates `UserRegistrationService`, a `final class` with a constructor-injection placeholder for its repository.
+
+### `make:grammar` and `make:visitor` — kariricode/parser extensions
+
+```bash
+kcli make:grammar Blade --namespace=App\\Parser
+kcli make:visitor ImportCollector --namespace=App\\Parser
+```
+
+Generate classes for the contracts of kariricode/parser 4.1: `BladeGrammar`
+implements `Grammar` with `id()` (`blade`) and `phpVersionRange()`;
+`ImportCollectorVisitor` implements `NodeVisitor`, whose `enterNode()` and
+`leaveNode()` return a replacement node or `null`.
 
 ---
 
@@ -270,7 +280,7 @@ V02, V05, V06 and V08 are reserved for AST engines plugged in through the
 
 ### `check:ecosystem`
 
-Verifies that all installed KaririCode packages meet the minimum versions this CLI expects.
+Reads `composer.lock` (`packages` and `packages-dev`) from the working directory and compares each KaririCode package with the lowest release the Spec V4.3.3 / ARFA 1.3 line works with: contract 2.12.0, exception 2.0.0, class-discovery 2.0.0, property-inspector 3.0.0, processor-pipeline 3.0.0, cache 4.1.0, console 4.6.0, router 4.1.0 and database 4.4.0. A package joins the list when its release for the line is published. Branch installs are reported as `DEV`; exit 1 when a package is below its minimum or the lock is missing or invalid.
 
 ```bash
 kcli check:ecosystem
@@ -281,18 +291,18 @@ kcli check:ecosystem --json
 
 ## Error Codes
 
-Block 8600–8699; each exception implements one `kariricode/contract` family
-and its message starts with `[CLI_86xx]` (ADR-009).
+Block 8900–8999; each exception implements one `kariricode/contract` family
+and its message starts with `[CLI_89xx]` (ADR-009).
 
 | Code | Family | Factory |
 |---|---|---|
-| 8600 | Validation | `InvalidScaffoldRequestException::invalidClassName()` |
-| 8601 | Validation | `InvalidScaffoldRequestException::invalidNamespace()` |
-| 8602 | Validation | `InvalidScaffoldRequestException::invalidFieldDefinition()` |
-| 8620 | NotFound | `GeneratorNotFoundException::forTarget(string $target)` |
-| 8640 | Runtime | `ScaffoldFailureException::fileExists(string $path)` |
-| 8641 | Runtime | `ScaffoldFailureException::writeFailed(string $path, string $reason)` |
-| 8642 | Runtime | `ScaffoldFailureException::registrySealed(string $target)` |
+| 8900 | Validation | `InvalidScaffoldRequestException::invalidClassName()` |
+| 8901 | Validation | `InvalidScaffoldRequestException::invalidNamespace()` |
+| 8902 | Validation | `InvalidScaffoldRequestException::invalidFieldDefinition()` |
+| 8920 | NotFound | `GeneratorNotFoundException::forTarget(string $target)` |
+| 8940 | Runtime | `ScaffoldFailureException::fileExists(string $path)` |
+| 8941 | Runtime | `ScaffoldFailureException::writeFailed(string $path, string $reason)` |
+| 8942 | Runtime | `ScaffoldFailureException::registrySealed(string $target)` |
 
 
 ## Architecture
@@ -316,6 +326,7 @@ cli/
 ├── src/
 │   ├── Application/
 │   │   ├── FileWriter.php
+│   │   ├── InputValue.php
 │   │   ├── ScaffoldRunner.php
 │   │   └── WriteOutcome.php
 │   ├── Command/
@@ -383,6 +394,8 @@ cli/
 │       ├── InspectionResult.php
 │       └── RouteEntry.php
 ├── tests/
+│   ├── Support/
+│   │   └── RecordingOutput.php
 │   ├── Conformance/
 │   │   ├── SelfComplianceTest.php
 │   │   └── SpecConformanceTest.php
@@ -391,9 +404,13 @@ cli/
 │       │   ├── FileWriterTest.php
 │       │   └── ScaffoldRunnerTest.php
 │       ├── Command/
+│       │   ├── AdapterCommandsTest.php
+│       │   ├── CommandsTest.php
+│       │   └── ConsoleContractTest.php
 │       ├── Enum/
 │       │   └── ViolationSeverityTest.php
 │       ├── Generator/
+│       │   ├── DpoGeneratorGoldenTest.php
 │       │   ├── DpoGeneratorTest.php
 │       │   ├── EntityGeneratorTest.php
 │       │   ├── GeneratorRegistryTest.php
@@ -403,8 +420,10 @@ cli/
 │       │   └── FieldInferenceEngineTest.php
 │       ├── Inspector/
 │       │   ├── ArfaComplianceInspectorTest.php
+│       │   ├── RegexComplianceEngineGoldenTest.php
 │       │   └── RegexComplianceEngineTest.php
 │       ├── Template/
+│       │   ├── OutputRendererGoldenTest.php
 │       │   └── OutputRendererTest.php
 │       └── ValueObject/
 │           └── GeneratorContextTest.php
@@ -426,8 +445,10 @@ cli/
 │   │   ├── ADR-009-error-model.md
 │   │   ├── ADR-010-spec-tooling-and-supply-chain.md
 │   │   ├── ADR-011-component-boundaries.md
-│   │   └── ADR-012-documentation-and-generated-code.md
+│   │   ├── ADR-012-documentation-and-generated-code.md
+│   │   └── ADR-013-toolchain-through-kcode.md
 │   ├── quality/
+│   │   └── QD-V433-COMPLIANCE.md
 │   ├── security/
 │   │   └── SECURITY.md
 │   ├── spec/
@@ -437,6 +458,8 @@ cli/
 │   └── workflows/
 │       └── ci.yml
 ├── composer.json
+├── composer.lock
+├── devkit.php
 ├── phpunit.xml.dist
 ├── phpstan.neon
 ├── phpstan-complexity.neon
@@ -452,19 +475,24 @@ cli/
 
 ## Development
 
-Quality gates live in this repository (ADR-010) and run through Composer:
+The toolchain comes from KaririCode Devkit (ADR-013): `devkit.php` pins
+PHPUnit, PHPStan, Psalm, PHP-CS-Fixer and Infection, kcode installs them into
+`.kcode/`, and they run the configs committed here (ADR-010). Install kcode
+once, then:
 
 ```bash
+composer install
+kcode init                 # installs the pinned tools into .kcode/
 composer check             # cs-check, phpstan (max), psalm (level 1), complexity, test, security
 composer test-conformance  # Spec V4.3.3 conformance tests only
 composer infection         # mutation testing, MSI >= 80
 composer sbom              # CycloneDX 1.5 SBOM from composer.lock
 ```
 
-`composer.lock` is committed and CI pins every action by commit SHA (§32).
-KaririCode\Devkit can still be used locally; its binary is `vendor/bin/kcode`,
-this package's is `vendor/bin/kcli` (ADR-006). CONTRIBUTING.md lists the code
-rules and docs/quality/QD-V433-COMPLIANCE.md the current gate status.
+`composer.lock` is committed and CI pins every action by commit SHA and kcode
+by version and SHA-256 (§32). kcode's binary is `kcode`, this package's is
+`kcli` (ADR-006). CONTRIBUTING.md lists the code rules and
+docs/quality/QD-V433-COMPLIANCE.md the current gate status.
 
 ## License
 
