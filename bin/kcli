@@ -1,0 +1,74 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * KaririCode CLI — kcli
+ *
+ * The professional developer toolchain for the KaririCode Framework.
+ *
+ * USAGE:
+ *   kcli make:dpo UserRegistration --fields=email,password,name
+ *   kcli make:command SendWelcomeEmail
+ *   kcli make:entity User --fields=name:string,email:email
+ *   kcli make:value-object EmailAddress --fields=value:email
+ *   kcli make:repository UserRepository
+ *   kcli make:service UserRegistration
+ *   kcli inspect:container
+ *   kcli inspect:router --format=tree
+ *   kcli check:arfa --path=src
+ *   kcli check:ecosystem
+ *
+ * @package   KaririCode\Cli
+ * @author    Walmir Silva <walmir.silva@kariricode.org>
+ * @license   MIT
+ * @since     4.0.0
+ */
+
+// ── Autoloader resolution ────────────────────────────────────────────
+
+$autoloadPaths = [
+    __DIR__ . '/../vendor/autoload.php',       // package root
+    __DIR__ . '/../../../autoload.php',        // installed as dependency
+];
+
+$loaded = false;
+
+foreach ($autoloadPaths as $autoloadFile) {
+    if (file_exists($autoloadFile)) {
+        require_once $autoloadFile;
+        $loaded = true;
+        break;
+    }
+}
+
+if (!$loaded) {
+    fwrite(
+        STDERR,
+        'Error: Composer autoload not found.' . PHP_EOL
+        . 'Run "composer install" from the project root.' . PHP_EOL,
+    );
+    exit(1);
+}
+
+// ── PHP version guard ────────────────────────────────────────────────
+
+if (PHP_VERSION_ID < 80400) {
+    fwrite(
+        STDERR,
+        'Error: KaririCode CLI requires PHP 8.4 or higher.' . PHP_EOL
+        . 'Current version: ' . PHP_VERSION . PHP_EOL,
+    );
+    exit(1);
+}
+
+// ── Bootstrap & run ──────────────────────────────────────────────────
+
+use KaririCode\Cli\Integration\CliServiceProvider;
+use KaririCode\Console\Input\ArgvInput;
+use KaririCode\Console\Output\ConsoleOutput;
+
+$app = CliServiceProvider::buildApplication();
+
+exit($app->dispatch(new ArgvInput(), new ConsoleOutput()));

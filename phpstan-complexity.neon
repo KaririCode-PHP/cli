@@ -1,0 +1,12 @@
+# Spec V4.3.3 §13: cognitive complexity ≤ 15 per function.
+includes:
+    - vendor/tomasvotruba/cognitive-complexity/config/extension.neon
+
+parameters:
+    level: 0
+    paths:
+        - src
+    tmpDir: build/phpstan-complexity
+    cognitive_complexity:
+        class: 120
+        function: 15

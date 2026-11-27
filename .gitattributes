@@ -1,0 +1,14 @@
+* text=auto eol=lf
+/.github export-ignore
+/docs export-ignore
+/tests export-ignore
+/tools export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.php-cs-fixer.dist.php export-ignore
+/infection.json.dist export-ignore
+/phpstan.neon export-ignore
+/phpstan-complexity.neon export-ignore
+/phpunit.xml.dist export-ignore
+/psalm.xml export-ignore
+/CONTRIBUTING.md export-ignore
