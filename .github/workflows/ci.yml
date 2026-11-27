@@ -1,4 +1,10 @@
-name: CI
+# Spec V4.3.3 §29.1 quality gate. Actions are pinned by full commit SHA (§32):
+# a moving tag can be repointed, as in CVE-2025-30066 (tj-actions/changed-files).
+# Linux runs every gate through kcode 1.2.1, pinned by version and SHA-256,
+# with the configs committed here (ADR-013). Windows runs the Unit suite, which
+# covers the path handling of the scaffold pipeline, with the PHPUnit that
+# devkit.php pins.
+name: ci
 
 on:
   push:
@@ -8,37 +14,68 @@ on:
 permissions:
   contents: read
 
+env:
+  KCODE_VERSION: 1.2.1
+  KCODE_SHA256: 1bc43b06798b4e7fc1df341cc505f316549f0dd5efb9c8d80031415b0cdf3e3b
+  PHPUNIT_VERSION: 11.5.56
+
 jobs:
-  quality:
-    name: Quality gate (Linux, PHP 8.4)
+  gate:
+    name: Linux / PHP 8.4
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: '8.4'
-          coverage: pcov
           extensions: mbstring
+          coverage: pcov
           tools: composer:v2
+
       - run: composer validate --strict
       - run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Install kcode ${{ env.KCODE_VERSION }}, checksum verified
+        run: |
+          curl -fsSLo kcode.phar "https://github.com/KaririCode-PHP/devkit/releases/download/v${KCODE_VERSION}/kcode.phar"
+          echo "${KCODE_SHA256}  kcode.phar" | sha256sum -c -
+          sudo install -m 0755 kcode.phar /usr/local/bin/kcode
+          rm kcode.phar
+      - run: kcode init
+
       - run: composer check
-      - run: composer infection
+
+      - name: Mutation testing (MSI >= 80%)
+        run: composer infection
+
       - run: composer sbom
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: sbom
           path: sbom.cdx.json
 
-  tests-windows:
-    name: Tests (Windows, PHP 8.4)
+  windows:
+    name: Windows / PHP 8.4 (Unit suite)
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: '8.4'
           extensions: mbstring
+          coverage: none
           tools: composer:v2
+
       - run: composer install --no-interaction --no-progress --prefer-dist
-      - run: composer test
+      - run: composer global require "phpunit/phpunit:${{ env.PHPUNIT_VERSION }}" --no-interaction --no-progress
+      # Conformance reads the code, not the platform: Linux runs it.
+      - name: Unit suite
+        shell: bash
+        run: |
+          "$(composer global config bin-dir --absolute --quiet)/phpunit" -c phpunit.xml.dist --testsuite Unit
