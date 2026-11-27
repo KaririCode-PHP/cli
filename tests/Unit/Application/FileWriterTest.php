@@ -6,8 +6,8 @@ namespace KaririCode\Cli\Tests\Unit\Application;
 
 use KaririCode\Cli\Application\FileWriter;
 use KaririCode\Cli\Enum\WriteStatus;
-use KaririCode\Contract\Exception\ExceptionInterface;
 use KaririCode\Cli\ValueObject\GeneratedFile;
+use KaririCode\Contract\Exception\ExceptionInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -57,7 +57,7 @@ final class FileWriterTest extends TestCase
         (new FileWriter())->write($this->file('A.php'));
 
         $this->expectException(ExceptionInterface::class);
-        $this->expectExceptionCode(8640);
+        $this->expectExceptionCode(8940);
 
         (new FileWriter())->write($this->file('A.php'));
     }
@@ -70,9 +70,9 @@ final class FileWriterTest extends TestCase
 
         try {
             (new FileWriter())->writeAll([$this->file('A.php'), $this->file('B.php')]);
-            self::fail('Expected ScaffoldFailureException 8640');
+            self::fail('Expected ScaffoldFailureException 8940');
         } catch (ExceptionInterface $e) {
-            self::assertSame(8640, $e->getCode());
+            self::assertSame(8940, $e->getCode());
         }
 
         self::assertFileDoesNotExist($this->dir . '/A.php');

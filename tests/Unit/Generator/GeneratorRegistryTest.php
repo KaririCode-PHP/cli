@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace KaririCode\Cli\Tests\Unit\Generator;
 
 use KaririCode\Cli\Enum\GeneratorTarget;
-use KaririCode\Contract\Exception\ExceptionInterface;
 use KaririCode\Cli\Generator\DpoGenerator;
 use KaririCode\Cli\Generator\GeneratorRegistry;
+use KaririCode\Contract\Exception\ExceptionInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -34,14 +34,14 @@ final class GeneratorRegistryTest extends TestCase
         ];
 
         foreach ($targets as $target) {
-            self::assertNotNull($registry->get($target));
+            self::assertSame($target->label(), $registry->get($target)->type);
         }
     }
 
     public function testCustomGeneratorOverridesDefault(): void
     {
-        $registry  = new GeneratorRegistry();
-        $custom    = new DpoGenerator(); // same type, new instance
+        $registry = new GeneratorRegistry();
+        $custom   = new DpoGenerator(); // same type, new instance
 
         $registry->register(GeneratorTarget::Dpo, $custom);
 
@@ -63,7 +63,7 @@ final class GeneratorRegistryTest extends TestCase
         $registry->get(GeneratorTarget::Dpo);
 
         $this->expectException(ExceptionInterface::class);
-        $this->expectExceptionCode(8642);
+        $this->expectExceptionCode(8942);
 
         $registry->register(GeneratorTarget::Dpo, new DpoGenerator());
     }

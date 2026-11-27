@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace KaririCode\Cli\Tests\Unit\Inference;
 
 use KaririCode\Cli\Enum\FieldType;
-use KaririCode\Contract\Exception\ExceptionInterface;
 use KaririCode\Cli\Inference\FieldInferenceEngine;
 use KaririCode\Cli\ValueObject\FieldDescriptor;
+use KaririCode\Contract\Exception\ExceptionInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

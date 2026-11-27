@@ -20,11 +20,11 @@ final class ScaffoldRunnerTest extends TestCase
     /** @return iterable<string, array{string, string, string}> */
     public static function classNames(): iterable
     {
-        yield 'appends suffix'          => ['UserRegistration', 'Dpo', 'UserRegistrationDpo'];
-        yield 'keeps suffix'            => ['UserRegistrationDpo', 'Dpo', 'UserRegistrationDpo'];
+        yield 'appends suffix' => ['UserRegistration', 'Dpo', 'UserRegistrationDpo'];
+        yield 'keeps suffix' => ['UserRegistrationDpo', 'Dpo', 'UserRegistrationDpo'];
         yield 'suffix case-insensitive' => ['UserDPO', 'Dpo', 'UserDPO'];
-        yield 'upper-cases first char'  => ['blade', 'Grammar', 'BladeGrammar'];
-        yield 'trims, no suffix'        => ['  Money ', '', 'Money'];
+        yield 'upper-cases first char' => ['blade', 'Grammar', 'BladeGrammar'];
+        yield 'trims, no suffix' => ['  Money ', '', 'Money'];
     }
 
     #[DataProvider('classNames')]
@@ -51,7 +51,7 @@ final class ScaffoldRunnerTest extends TestCase
         $output = $this->createMock(Output::class);
         $output->method('writeln')->willReturnCallback(
             static function (mixed $message = '') use (&$lines): void {
-                $lines[] = (string) $message;
+                $lines[] = is_string($message) ? $message : '';
             },
         );
 

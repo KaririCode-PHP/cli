@@ -31,14 +31,14 @@ final class RegexComplianceEngineTest extends TestCase
     /** @return iterable<string, array{string, string}> */
     public static function violations(): iterable
     {
-        yield 'V10 boilerplate tag'       => ['V10', "/**\n * @author Someone\n */\nfinal class A {}"];
-        yield 'V11 untyped constant'      => ['V11', "final class A\n{\n    private const LIMIT = 3;\n}"];
-        yield 'V12 dollar end anchor'     => ['V12', "final class A\n{\n    public function f(): bool { return preg_match('/^a\$/', 'a') === 1; }\n}"];
-        yield 'V13 getter'                => ['V13', "final class A\n{\n    public function getName(): string { return ''; }\n}"];
-        yield 'V14 hook in readonly'      => ['V14', "final readonly class A\n{\n    public string \$x { get => 'x'; }\n}"];
-        yield 'V16 generic exception'     => ['V16', "final class A\n{\n    public function f(): never { throw new \\RuntimeException('x'); }\n}"];
-        yield 'V17 short marker'          => ['V17', "final class A\n{\n    // ── Short ──\n}"];
-        yield 'V18 object parameter'      => ['V18', "final class A\n{\n    public function f(object \$o): void {}\n}"];
+        yield 'V10 boilerplate tag' => ['V10', "/**\n * @author Someone\n */\nfinal class A {}"];
+        yield 'V11 untyped constant' => ['V11', "final class A\n{\n    private const LIMIT = 3;\n}"];
+        yield 'V12 dollar end anchor' => ['V12', "final class A\n{\n    public function f(): bool { return preg_match('/^a\$/', 'a') === 1; }\n}"];
+        yield 'V13 getter' => ['V13', "final class A\n{\n    public function getName(): string { return ''; }\n}"];
+        yield 'V14 hook in readonly' => ['V14', "final readonly class A\n{\n    public string \$x { get => 'x'; }\n}"];
+        yield 'V16 generic exception' => ['V16', "final class A\n{\n    public function f(): never { throw new \\RuntimeException('x'); }\n}"];
+        yield 'V17 short marker' => ['V17', "final class A\n{\n    // ── Short ──\n}"];
+        yield 'V18 object parameter' => ['V18', "final class A\n{\n    public function f(object \$o): void {}\n}"];
     }
 
     #[DataProvider('violations')]
@@ -58,7 +58,7 @@ final class RegexComplianceEngineTest extends TestCase
         $rows = (new RegexComplianceEngine())->scan($this->dir)->rows;
 
         self::assertSame(['V15'], array_column($rows, 'code'));
-        self::assertStringContainsString('Preconditions:', $rows[0]['message']);
+        self::assertStringContainsString('Preconditions:', (string) $rows[0]['message']);
     }
 
     public function testCompliantFileProducesNoRows(): void

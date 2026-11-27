@@ -27,7 +27,9 @@ final class OutputRendererTest extends TestCase
 
         self::assertTrue(json_validate($text), $text);
         self::assertStringNotContainsString('Completed in', $text);
-        self::assertSame('V01', json_decode($text, true)['rows'][0]['code']);
+        /** @var array{rows: list<array{code: string}>} $decoded */
+        $decoded = json_decode($text, true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame('V01', $decoded['rows'][0]['code']);
     }
 
     public function testPlainFormatEmitsOneLinePerRow(): void
@@ -81,7 +83,7 @@ final class OutputRendererTest extends TestCase
         $output = $this->createMock(Output::class);
         $output->method('writeln')->willReturnCallback(
             function (mixed $message = ''): void {
-                $this->lines[] = (string) $message;
+                $this->lines[] = is_string($message) ? $message : '';
             },
         );
 

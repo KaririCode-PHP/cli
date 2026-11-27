@@ -42,8 +42,12 @@ final class SpecConformanceTest extends TestCase
         foreach ($this->sources() as $file => $code) {
             self::assertSame(0, preg_match('/^\s*\*\s*@(?:package|author|license|since|copyright)\b/m', $code), $file);
 
+            // The type's own docblock: a generator's template also carries
+            // these elements, and a search of the whole file finds those.
+            $doc = (string) self::reflect($code)->getDocComment();
+
             foreach (['Preconditions:', 'Thread-safety:', 'Side effects:', 'Example:', 'References:', '@see https://'] as $element) {
-                self::assertStringContainsString($element, $code, "{$file} lacks {$element}");
+                self::assertStringContainsString($element, $doc, "{$file}: the type's docblock lacks {$element}");
             }
         }
     }
@@ -79,7 +83,8 @@ final class SpecConformanceTest extends TestCase
     public function testEachExceptionImplementsExactlyOneContractFamily(): void
     {
         foreach (glob(self::ROOT . '/src/Exception/*.php') ?: [] as $path) {
-            $class      = 'KaririCode\\Cli\\Exception\\' . basename($path, '.php');
+            $class = 'KaririCode\\Cli\\Exception\\' . basename($path, '.php');
+            self::assertTrue(class_exists($class), $class);
             $reflection = new \ReflectionClass($class);
             $families   = array_filter(self::FAMILIES, static fn(string $family): bool => $reflection->implementsInterface($family));
 
@@ -98,8 +103,8 @@ final class SpecConformanceTest extends TestCase
 
             foreach ($matches as [, $prefix, $code]) {
                 self::assertSame($prefix, $code, 'message prefix and code differ');
-                self::assertGreaterThanOrEqual(8600, (int) $code);
-                self::assertLessThanOrEqual(8699, (int) $code);
+                self::assertGreaterThanOrEqual(8900, (int) $code);
+                self::assertLessThanOrEqual(8999, (int) $code);
                 $codes[] = $code;
             }
         }
@@ -132,11 +137,13 @@ final class SpecConformanceTest extends TestCase
 
     public function testComposerMetadataFollowsGateG4(): void
     {
-        $composer = json_decode((string) file_get_contents(self::ROOT . '/composer.json'), true, 512, JSON_THROW_ON_ERROR);
+        /** @var array{extra: array{kariricode?: array<string, mixed>, arfa?: mixed}, require: array<string, string>} $composer the manifest of this repository */
+        $composer   = json_decode((string) file_get_contents(self::ROOT . '/composer.json'), true, 512, JSON_THROW_ON_ERROR);
+        $kariricode = $composer['extra']['kariricode'] ?? [];
 
-        self::assertSame(['version' => '1.3', 'level' => 1], $composer['extra']['kariricode']['arfa'] ?? null);
-        self::assertSame(['version' => '5.0', 'level' => 1], $composer['extra']['kariricode']['asvs'] ?? null);
-        self::assertSame('4.3.3', $composer['extra']['kariricode']['spec'] ?? null);
+        self::assertSame(['version' => '1.3', 'level' => 1], $kariricode['arfa'] ?? null);
+        self::assertSame(['version' => '5.0', 'level' => 1], $kariricode['asvs'] ?? null);
+        self::assertSame('4.3.3', $kariricode['spec'] ?? null);
         self::assertArrayNotHasKey('arfa', $composer['extra'], 'the V4.0 extra.arfa block is superseded');
         self::assertSame('>=8.4', $composer['require']['php'] ?? null);
         self::assertArrayHasKey('kariricode/contract', $composer['require']);
@@ -172,10 +179,24 @@ final class SpecConformanceTest extends TestCase
         }
     }
 
+    /** @return \ReflectionClass<object> */
+    private static function reflect(string $code): \ReflectionClass
+    {
+        preg_match('/^namespace\s+([^;]+);/m', $code, $namespace);
+        preg_match('/^(?:(?:final|abstract|readonly)\s+)*(?:class|interface|trait|enum)\s+(\w+)/m', $code, $type);
+        $name = ($namespace[1] ?? '') . '\\' . ($type[1] ?? '');
+
+        if (!class_exists($name) && !interface_exists($name) && !trait_exists($name)) {
+            self::fail("{$name} does not autoload");
+        }
+
+        return new \ReflectionClass($name);
+    }
+
     /** @return array<string, string> */
     private function sources(): array
     {
-        $files = [];
+        $files    = [];
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(self::ROOT . '/src', \FilesystemIterator::SKIP_DOTS));
 
         foreach ($iterator as $entry) {
