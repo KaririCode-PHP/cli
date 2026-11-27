@@ -1,6 +1,6 @@
 # Spec V4.3.3 §13: cognitive complexity ≤ 15 per function.
 includes:
-    - vendor/tomasvotruba/cognitive-complexity/config/extension.neon
+    - .kcode/vendor/tomasvotruba/cognitive-complexity/config/extension.neon
 
 parameters:
     level: 0

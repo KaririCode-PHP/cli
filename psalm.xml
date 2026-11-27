@@ -7,7 +7,7 @@
     cacheDirectory="build/psalm"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
-    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    xsi:schemaLocation="https://getpsalm.org/schema/config .kcode/vendor/vimeo/psalm/config.xsd"
 >
     <projectFiles>
         <directory name="src"/>
@@ -15,4 +15,15 @@
             <directory name="vendor"/>
         </ignoreFiles>
     </projectFiles>
+
+    <issueHandlers>
+        <!--
+            Tool limitation (Psalm 6.19): virtual hooked properties (no
+            backing store, such as Inspector::$componentName) are reported as
+            "not set in constructor". PHP itself throws on any uninitialised
+            access, and the suite instantiates every class. Same handler as
+            kariricode/console.
+        -->
+        <PropertyNotSetInConstructor errorLevel="suppress"/>
+    </issueHandlers>
 </psalm>

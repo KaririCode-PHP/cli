@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 /*
  * Secret scan (Spec V4.3.3 §32): fails when a repository text file holds
- * something shaped like a credential. vendor/, build/ and .git/ are skipped.
+ * something shaped like a credential. vendor/, build/, .git/ and .kcode/ (the
+ * toolchain kcode installs) are skipped, and so is anything that is not a
+ * regular file, such as a symlinked directory.
  *
  * Usage: php tools/secret-scan.php [root]
  */
@@ -22,7 +24,7 @@ $findings = [];
 
 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)) as $file) {
     $path = $file->getPathname();
-    if (preg_match('#/(?:vendor|build|\.git)/#', $path) === 1 || realpath($path) === $self || $file->getSize() > 1_000_000) {
+    if (!$file->isFile() || preg_match('#/(?:vendor|build|\.git|\.kcode)(?:/|\z)#', $path) === 1 || realpath($path) === $self || $file->getSize() > 1_000_000) {
         continue;
     }
     $content = (string) file_get_contents($path);

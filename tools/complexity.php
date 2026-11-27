@@ -67,10 +67,10 @@ function body(array $t, int $i): array
             $stack[] = ['control' => $control, 'match' => $control && $pending['match'], 'arms' => 0, 'parens' => $parens];
             $pending = $control ? null : $pending;
             $nesting += $control ? 1 : 0;
-            $max      = max($max, $nesting);
+            $max = max($max, $nesting);
         } elseif ($text === '}') {
-            $frame       = array_pop($stack);
-            $nesting    -= $frame['control'] ? 1 : 0;
+            $frame = array_pop($stack);
+            $nesting -= $frame['control'] ? 1 : 0;
             $cyclomatic += $frame['match'] ? max(0, $frame['arms'] - 1) : 0;
             if ($stack === []) {
                 return [$cyclomatic, $max - 1, $i];
@@ -94,8 +94,8 @@ function measure(string $code): array
         if (!$t[$i]->is(T_FUNCTION) || !($t[$i + 1] ?? null)?->is(T_STRING)) {
             continue;
         }
-        $name          = $type . '::' . $t[$i + 1]->text;
-        [$params, $j]  = parameters($t, $i + 2);
+        $name         = $type . '::' . $t[$i + 1]->text;
+        [$params, $j] = parameters($t, $i + 2);
         while ($j < $n && $t[$j]->text !== '{' && $t[$j]->text !== ';') {
             $j++;
         }
@@ -104,10 +104,10 @@ function measure(string $code): array
             continue;
         }
         // The method body itself is a control frame of depth 1; body() reports depth − 1.
-        $t[$j - 1]          = $t[$j - 1]->is(CONTROL) ? $t[$j - 1] : new PhpToken(T_DO, 'do');
-        [$cc, $nest, $end]  = body($t, $j - 1);
-        $result[$name]      = ['cyclomatic' => $cc, 'nesting' => $nest, 'parameters' => $params];
-        $i                  = $end;
+        $t[$j - 1]         = $t[$j - 1]->is(CONTROL) ? $t[$j - 1] : new PhpToken(T_DO, 'do');
+        [$cc, $nest, $end] = body($t, $j - 1);
+        $result[$name]     = ['cyclomatic' => $cc, 'nesting' => $nest, 'parameters' => $params];
+        $i                 = $end;
     }
 
     return $result;

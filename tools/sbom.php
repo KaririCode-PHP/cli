@@ -47,7 +47,7 @@ $bom = [
         'timestamp' => gmdate('Y-m-d\TH:i:s\Z', $epoch !== false ? (int) $epoch : time()),
         'component' => ['type' => 'library', 'name' => $manifest['name'], 'purl' => 'pkg:composer/' . $manifest['name']],
     ],
-    'components'   => [
+    'components' => [
         ...array_map(static fn(array $p): array => $component($p, 'required'), $data['packages'] ?? []),
         ...array_map(static fn(array $p): array => $component($p, 'excluded'), $data['packages-dev'] ?? []),
     ],

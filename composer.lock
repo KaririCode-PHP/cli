@@ -1,0 +1,256 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "c5a9f77a2fec3aec134ab6e444edfa6d",
+    "packages": [
+        {
+            "name": "kariricode/console",
+            "version": "v4.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/KaririCode-PHP/console.git",
+                "reference": "f19c557e275e05171096e7dd3f8b1a249efc91eb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/KaririCode-PHP/console/zipball/f19c557e275e05171096e7dd3f8b1a249efc91eb",
+                "reference": "f19c557e275e05171096e7dd3f8b1a249efc91eb",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "kariricode/contract": "^2.12",
+                "php": "^8.4",
+                "psr/event-dispatcher": "^1.0",
+                "psr/log": "^3.0"
+            },
+            "suggest": {
+                "ext-pcntl": "Delivers SIGINT/SIGTERM/SIGHUP to Signalable commands (SignalMiddleware)",
+                "ext-posix": "Re-raises declined signals so the process ends by that signal",
+                "ext-tokenizer": "Required by AttributeCommandLoader to discover #[AsCommand] classes"
+            },
+            "type": "library",
+            "extra": {
+                "kariricode": {
+                    "arfa": {
+                        "level": 1,
+                        "version": "1.3"
+                    },
+                    "asvs": {
+                        "level": 1,
+                        "version": "5.0"
+                    },
+                    "spec": "4.3.3"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "KaririCode\\Console\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Walmir Silva",
+                    "email": "walmir.silva@kariricode.org"
+                }
+            ],
+            "description": "KaririCode Console — terminal command framework (ARFA 1.3 L1, Spec V4.3.3)",
+            "keywords": [
+                "KaririCode",
+                "arfa",
+                "cli",
+                "command",
+                "console"
+            ],
+            "support": {
+                "issues": "https://github.com/KaririCode-PHP/console/issues",
+                "source": "https://github.com/KaririCode-PHP/console/tree/v4.6.0"
+            },
+            "time": "2026-11-27T13:03:47+00:00"
+        },
+        {
+            "name": "kariricode/contract",
+            "version": "v2.12.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/KaririCode-PHP/contract.git",
+                "reference": "6ba79c820f810c451856bee67dabc5443f0782a5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/KaririCode-PHP/contract/zipball/6ba79c820f810c451856bee67dabc5443f0782a5",
+                "reference": "6ba79c820f810c451856bee67dabc5443f0782a5",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.4"
+            },
+            "type": "library",
+            "extra": {
+                "arfa": {
+                    "level": 1,
+                    "version": "1.3"
+                },
+                "asvs": {
+                    "level": 1,
+                    "version": "5.0"
+                },
+                "branch-alias": {
+                    "dev-main": "2.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "KaririCode\\Contract\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Walmir Silva",
+                    "email": "walmir.silva@kariricode.org"
+                }
+            ],
+            "description": "Interfaces shared by KaririCode Framework components, so that components depend on contracts instead of on each other. Interfaces only; no runtime dependency beyond PHP.",
+            "homepage": "https://kariricode.org/",
+            "keywords": [
+                "KaririCode",
+                "PSRs",
+                "arfa",
+                "contract",
+                "framework",
+                "interface",
+                "kariri",
+                "php"
+            ],
+            "support": {
+                "issues": "https://github.com/KaririCode-Framework/kariricode-contract/issues",
+                "source": "https://github.com/KaririCode-Framework/kariricode-contract"
+            },
+            "time": "2026-11-27T12:43:04+00:00"
+        },
+        {
+            "name": "psr/event-dispatcher",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/event-dispatcher.git",
+                "reference": "dbefd12671e8a14ec7f180cab83036ed26714bb0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/event-dispatcher/zipball/dbefd12671e8a14ec7f180cab83036ed26714bb0",
+                "reference": "dbefd12671e8a14ec7f180cab83036ed26714bb0",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\EventDispatcher\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Standard interfaces for event handling.",
+            "keywords": [
+                "events",
+                "psr",
+                "psr-14"
+            ],
+            "support": {
+                "issues": "https://github.com/php-fig/event-dispatcher/issues",
+                "source": "https://github.com/php-fig/event-dispatcher/tree/1.0.0"
+            },
+            "time": "2019-01-08T18:20:26+00:00"
+        },
+        {
+            "name": "psr/log",
+            "version": "3.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/log.git",
+                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/log/zipball/f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
+                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Log\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for logging libraries",
+            "homepage": "https://github.com/php-fig/log",
+            "keywords": [
+                "log",
+                "psr",
+                "psr-3"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/log/tree/3.0.2"
+            },
+            "time": "2024-09-11T13:17:53+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": true,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=8.4",
+        "ext-json": "*",
+        "ext-mbstring": "*"
+    },
+    "platform-dev": {},
+    "plugin-api-version": "2.6.0"
+}
